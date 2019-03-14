@@ -22,6 +22,11 @@ public class MediaMain extends AMain<MediaConfig> {
 	
 	@Override
 	protected void init2(MediaConfig config) {
+		// Set upload directory 
+		if (config.uploadDir==null) {
+			config.uploadDir = new File("web/uploads");
+		}
+		
 		// YA
 		YouAgainClient yac = new YouAgainClient("good-loop");
 		//		DB.init(config); already done

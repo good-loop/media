@@ -24,7 +24,7 @@ public class MediaUploadServlet implements IServlet {
 
 		if (conf.uploadDir!=null) {
 			servlet.setUploadDir(conf.uploadDir);
-			servlet.setWebRoot(new File("web-as"));		
+			servlet.setWebRoot(new File("web"));		
 			KServerType serverType = AppUtils.getServerType(state);
 			Log.d(AppUtils.getServerUrl(serverType, "media.good-loop.com").toString());
 			servlet.setServer(AppUtils.getServerUrl(serverType, "media.good-loop.com").toString());
