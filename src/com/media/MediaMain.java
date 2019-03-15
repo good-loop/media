@@ -14,9 +14,6 @@ import com.winterwell.youagain.client.YouAgainClient;
 
 public class MediaMain extends AMain<MediaConfig> {
 	
-	/** Path to your imageMagick binary **/
-	public static String imgMagickPath;
-	
 	public static void main(String[] args) {
 		main = new MediaMain();
 		main.doMain(args);	
@@ -33,7 +30,6 @@ public class MediaMain extends AMain<MediaConfig> {
 		if (config.uploadDir==null) {
 			config.uploadDir = new File("web/uploads");
 		}
-		initImageMagick();
 		// YA
 		YouAgainClient yac = new YouAgainClient("good-loop");
 		//		DB.init(config); already done
@@ -51,13 +47,5 @@ public class MediaMain extends AMain<MediaConfig> {
 	protected void addJettyServlets(JettyLauncher jl) {
 		jl.addServlet("/upload", new HttpServletWrapper(MediaUploadServlet::new));
 		super.addJettyServlets(jl);
-	}
-
-	private void initImageMagick() {
-		if( imgMagickPath != null ) return;
-		
-		// TODO: Have this find folder by dynamically searching for ImageMagick* directory. Worried that we'll get caught out by an update
-		imgMagickPath = "/etc/apt/ImageMagick-7.0.8-33";
-		ProcessStarter.setGlobalSearchPath(imgMagickPath);
 	}
 }
