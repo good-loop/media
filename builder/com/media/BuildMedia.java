@@ -22,7 +22,6 @@ public class BuildMedia extends BuildWinterwellProject {
 		if (outDir!=null) {
 			mdt.setOutputDirectory(outDir);
 		}
-		mdt.addDependency("org.im4java", "im4java", "1.4.0");
 		deps.add(mdt);
 
 		return deps;
