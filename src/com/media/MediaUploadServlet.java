@@ -114,7 +114,7 @@ public class MediaUploadServlet implements IServlet {
 			state.put(STANDARD_UPLOAD, standardFile);
 			
 			// all OK
-			state.addMessage(Printer.format("File {0} uploaded", standardFile.getName()));	
+			state.addMessage(Printer.format("File {0} uploaded", standardFile.getAbsolutePath()));	
 		}
 		
 		File mobileFile = _assetArr.get("mobile");		
@@ -138,7 +138,7 @@ public class MediaUploadServlet implements IServlet {
 			state.put(MOBILE_UPLOAD, mobileFile);
 			
 			// all OK
-			state.addMessage(Printer.format("File {0} uploaded", mobileFile.getName()));	
+			state.addMessage(Printer.format("File {0} uploaded", mobileFile.getAbsolutePath()));	
 		}
 		
 		return _assetArr;
