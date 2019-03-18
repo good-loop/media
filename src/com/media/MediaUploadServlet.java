@@ -332,19 +332,17 @@ public class MediaUploadServlet implements IServlet {
 	
 	@Override
 	public void process(WebRequest state) throws IOException {
-		// upload
-		UploadServlet servlet = new UploadServlet();
 		// ...upload size
 		MediaConfig conf = Dep.get(MediaConfig.class);				
 		long maxUpload = ConfigBuilder.bytesFromString(conf.maxVideoUpload);
-		servlet.setMaxUpload(maxUpload);
+		this.setMaxUpload(maxUpload);
 
 		if (conf.uploadDir!=null) {
-			servlet.setUploadDir(conf.uploadDir);
-			servlet.setWebRoot(new File("web"));		
+			this.setUploadDir(conf.uploadDir);
+			this.setWebRoot(new File("web"));		
 			KServerType serverType = AppUtils.getServerType(state);
 			Log.d(AppUtils.getServerUrl(serverType, "media.good-loop.com").toString());
-			servlet.setServer(AppUtils.getServerUrl(serverType, "media.good-loop.com").toString());
+			this.setServer(AppUtils.getServerUrl(serverType, "media.good-loop.com").toString());
 		}
 		
 		// must be logged in
