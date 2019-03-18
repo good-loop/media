@@ -8,9 +8,6 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.im4java.core.ConvertCmd;
-import org.im4java.core.IM4JavaException;
-import org.im4java.core.IMOperation;
 
 import com.winterwell.utils.Dep;
 import com.winterwell.utils.FailureException;
