@@ -188,44 +188,67 @@ public class MediaUploadServlet implements IServlet {
 		// Don't want to further reduce tiny files or attempt to scale svgs
 		String commands = "";
 		// TODO: change this to use specific sizes rather than a random percentage
-		commands += " " + "magick " + imagePath + " -resize " + LOW_RES_QUALITY + " " + lowResImagePath;
+		commands += "magick " + imagePath + " -resize " + LOW_RES_QUALITY + " " + lowResImagePath;
 		
 		// Don't want to block server while executing bash script
 		if( !commands.isEmpty() ) {
-			final String threadCommands = commands;
+			final String[] threadCommands = new String[] {"/bin/bash", "-c", commands};
 			Thread processThread = new Thread(() -> {
-				Proc process = new Proc(threadCommands);
-				process.start();
+				ProcessBuilder process = new ProcessBuilder(threadCommands);
+		        // Merge System.err and System.out
+				process.redirectErrorStream(true);
+		        // Inherit System.out as redirect output stream
+				process.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+				try {
+					process.start();	
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			});
 			processThread.start();
 		}
 	}
 	
 	protected void doProcessVideo(File dest) {
-		String videoPath = dest.getAbsolutePath();
+		String inputVideoPath = dest.getAbsolutePath();
 		String fileName = dest.getName();
 		String lowResVideoPath = "";
-		// TODO: review this. Do we actually care about maintaining the current video path format?
+		String highResVideoPath = "";
+
 		// Replace sequence at end of path of form "-720p" with "-420p"
-		if( videoPath.matches("(?<=-)[0-9]{3,4}p(?=\\..{3,4}$)") ) {
-			lowResVideoPath = videoPath.replaceFirst("(?<=-)[0-9]{3,4}p(?=\\..{3,4}$)", "-480p");
+		if( inputVideoPath.matches("(?<=-)[0-9]{3,4}p(?=\\..{3,4}$)") ) {
+			lowResVideoPath = inputVideoPath.replaceFirst("(?<=-)[0-9]{3,4}p(?=\\..{3,4}$)", "-480p");
+			highResVideoPath = inputVideoPath.replaceFirst("(?<=-)[0-9]{3,4}p(?=\\..{3,4}$)", "-720p");
 		}
-		// Insert "-420p" just before the video's file extension
+		// Insert "-420p" or "-720p" just before the video's file extension
 		else {
-			lowResVideoPath = videoPath.replaceFirst("^(.*)(?=\\..{3,4}$)", "$1-480p");
+			lowResVideoPath = inputVideoPath.replaceFirst("^(.*)(?=\\..{3,4}$)", "$1-480p");
+			highResVideoPath = inputVideoPath.replaceFirst("^(.*)(?=\\..{3,4}$)", "$1-720p");
 		}
 		
 		String commands = "";
 		
-		// Add handbrake command
-		commands += " " + "magick " + videoPath + " -resize " + LOW_RES_QUALITY + " " + lowResVideoPath;
-		
+		// Commands for video conversion
+//		commands += "HandBrakeCLI --input '/home/mark/winterwell/media/web/uploads/markwinterwell.comemail/persil-02-desktop-720p-6113165454459297728.m4v' --preset 'Gmail Medium 5 Minutes 480p30' --output '/home/mark/winterwell/media/web/uploads/markwinterwell.comemail/persil-02-desktop-720p-6113165454459297728-480p.m4v'";
+		commands += "HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Medium 5 Minutes 480p30' " + "--output " + lowResVideoPath; 
+		commands += "; " + "HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Large 3 Minutes 720p30' " + "--output " + highResVideoPath;
+		commands += "; rm " + inputVideoPath;
+		// Execute commands in separate thread
 		// Don't want to block server while executing bash script
 		if( !commands.isEmpty() ) {
-			final String threadCommands = commands;
+			// Handbrake will only run if you add the /bin/bash -c before command
+			// https://stackoverflow.com/questions/44638025/how-to-use-process-builder-in-java-to-run-linux-shell-command
+			final String[] threadCommands = new String[] {"/bin/bash", "-c", commands};
 			Thread processThread = new Thread(() -> {
-				Proc process = new Proc(threadCommands);
-				process.start();
+				ProcessBuilder process = new ProcessBuilder(threadCommands);
+				// Print any errors from process to the console
+				process.redirectErrorStream(true);
+				process.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+				try {
+					process.start();	
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			});
 			processThread.start();
 		}
