@@ -56,6 +56,8 @@ public class MediaUploadServlet implements IServlet {
 	}
 	
 	public static final FileUploadField UPLOAD = new FileUploadField("upload");
+	public static final FileUploadField STANDARD_UPLOAD = new FileUploadField("standard_upload");
+	public static final FileUploadField MOBILE_UPLOAD = new FileUploadField("mobile_upload");
 	
 	File webRoot = new File("web"); // = Dep.get(ISiteConfig.class).getWebRootDir();
 	
@@ -78,40 +80,65 @@ public class MediaUploadServlet implements IServlet {
 	 * @return asset for the uploaded file
 	 * @throws WebInputException
 	 */
-	private File[] doUpload(WebRequest state, Map cargo) throws WebInputException {
+	private Map<String, File> doUpload(WebRequest state, Map cargo) throws WebInputException {
 		if (cargo==null) cargo = new ArrayMap(); // avoid NPEs
-		state.processMultipartIncoming(new ArrayMap<String, AField>(
-	//		CONVERT.getName(), CONVERT
-		));
+		state.processMultipartIncoming(new ArrayMap<String, AField>());
 		// name from original filename - accessed via the pseudo field made by FileUploadField
 		String name = state.get(new Key<String>(UPLOAD.getFilenameField()), "");
 		// Get the file
 		File tempFile = state.get(UPLOAD);
 		
 		// Do the storage!
-		File[] _assetArr = doUpload2(tempFile, name, cargo, state.getParameterMap());
+		Map<String, File> _assetArr = doUpload2(tempFile, name, cargo, state.getParameterMap());
 		
-		for( File _asset : _assetArr ) {
+		File standardFile = _assetArr.get("standard");
+		if( standardFile != null ) {
+			Map<String, Object> standardParams = new ArrayMap();
+			
 			// TODO: _asset will just be overridden. Add map/array and make sure front-end can deal with this
 			// respond
-			cargo.put("contentSize", _asset.length());
-			cargo.put("uploadDate", new Time().toISOString());
-			cargo.put("author", state.getUserId());
-			cargo.put("fileFormat", WebUtils2.getMimeType(_asset));
-			cargo.put("name", _asset.getName());
-			cargo.put("absolutePath", _asset.getAbsolutePath());
+			standardParams.put("contentSize", standardFile.length());
+			standardParams.put("uploadDate", new Time().toISOString());
+			standardParams.put("author", state.getUserId());
+			standardParams.put("fileFormat", WebUtils2.getMimeType(standardFile));
+			standardParams.put("name", standardFile.getName());
+			standardParams.put("absolutePath", standardFile.getAbsolutePath());
 			
-			String relpath = FileUtils.getRelativePath(_asset, webRoot);
+			String relpath = FileUtils.getRelativePath(standardFile, webRoot);
 			// ugly code to avoid // inside the path whatever the path bits
 			if (relpath.startsWith("/")) relpath.substring(1);		
 			String url = server +(server.endsWith("/")? "" : "/")+relpath;
-			cargo.put("url", url);
+			standardParams.put("url", url);
 			
-		
-			state.put(UPLOAD, _asset);
+			cargo.put("standard", standardParams);
+			state.put(STANDARD_UPLOAD, standardFile);
 			
 			// all OK
-			state.addMessage(Printer.format("File {0} uploaded", _asset.getName()));	
+			state.addMessage(Printer.format("File {0} uploaded", standardFile.getName()));	
+		}
+		
+		File mobileFile = _assetArr.get("mobile");		
+		if( mobileFile != null ) {
+			Map<String, Object> mobileParams = new ArrayMap();
+			
+			mobileParams.put("contentSize", mobileFile.length());
+			mobileParams.put("uploadDate", new Time().toISOString());
+			mobileParams.put("author", state.getUserId());
+			mobileParams.put("fileFormat", WebUtils2.getMimeType(mobileFile));
+			mobileParams.put("name", mobileFile.getName());
+			mobileParams.put("absolutePath", mobileFile.getAbsolutePath());
+			
+			String relpath = FileUtils.getRelativePath(mobileFile, webRoot);
+			// ugly code to avoid // inside the path whatever the path bits
+			if (relpath.startsWith("/")) relpath.substring(1);		
+			String url = server +(server.endsWith("/")? "" : "/")+relpath;
+			mobileParams.put("url", url);
+			
+			cargo.put("mobile", mobileParams);
+			state.put(MOBILE_UPLOAD, mobileFile);
+			
+			// all OK
+			state.addMessage(Printer.format("File {0} uploaded", mobileFile.getName()));	
 		}
 		
 		return _assetArr;
@@ -136,7 +163,7 @@ public class MediaUploadServlet implements IServlet {
 	 * @param params url parameters
 	 * @return
 	 */
-	public File[] doUpload2(File tempFile, String name, Map cargo, Map params) 
+	public Map<String, File> doUpload2(File tempFile, String name, Map cargo, Map params) 
 	{
 		if (tempFile==null) {
 			throw new MissingFieldException(UPLOAD);
@@ -158,8 +185,10 @@ public class MediaUploadServlet implements IServlet {
 			
 			assert tempFile.exists() : "Destination file doesn't exist: "+tempFile.getAbsolutePath();
 			Log.report(tempFile.length()+" bytes uploaded to "+tempFile.getAbsolutePath(), Level.FINE);
-			File[] _assetArr = new File[] {};
+			Map _assetArr = new ArrayMap();
 			if (FileUtils.isImage(tempFile)) {
+				// Standard file is just unmodified upload file.
+				// Move in to final place
 				FileUtils.move(tempFile, standardDest);
 				_assetArr = doProcessImage(standardDest, mobileDest);
 			} else if (FileUtils.isVideo(tempFile)) {
@@ -176,7 +205,7 @@ public class MediaUploadServlet implements IServlet {
 	}
 	
 	/** User can specify a number of image post-processing options via URL params **/
-	protected File[] doProcessImage(File standardDest, File mobileDest) {			
+	protected Map<String, File> doProcessImage(File standardDest, File mobileDest) {			
 		String imagePath = standardDest.getAbsolutePath();
 		String lowResImagePath = mobileDest.getAbsolutePath();
 
@@ -202,11 +231,14 @@ public class MediaUploadServlet implements IServlet {
 			processThread.start();
 		}
 		
-		return new File[] {new File(imagePath), new File(lowResImagePath)};
+		Map out = new ArrayMap();
+		out.put("standard", imagePath);
+		out.put("mobile", lowResImagePath);
+		return out;
 	}
 	
 	/** Source needs to be in different location to outputs: can't write to file you're reading from **/
-	protected File[] doProcessVideo(File tempFile, File standardDest, File mobileDest) {
+	protected Map<String, File> doProcessVideo(File tempFile, File standardDest, File mobileDest) {
 		String inputVideoPath = tempFile.getAbsolutePath();
 		String lowResVideoPath = mobileDest.getAbsolutePath();
 		String highResVideoPath = standardDest.getAbsolutePath();
@@ -235,7 +267,10 @@ public class MediaUploadServlet implements IServlet {
 			processThread.start();
 		}
 		// Will return before above thread has actually finished executing
-		return new File[] {new File(lowResVideoPath), new File(highResVideoPath)};
+		Map out = new ArrayMap();
+		out.put("standard", new File(highResVideoPath));
+		out.put("mobile", new File(lowResVideoPath));
+		return out;
 	}
 	
 	private void checkFileSize(File tempFile) {
@@ -320,7 +355,7 @@ public class MediaUploadServlet implements IServlet {
 		if (ServletFileUpload.isMultipartContent(state.getRequest())) {
 	//		try {
 			Map cargo = new ArrayMap();			
-			File[] asset = doUpload(state, cargo);
+			Map<String, File> asset = doUpload(state, cargo);
 			state.sendRedirect();
 			
 			WebUtils2.CORS(state, false);
