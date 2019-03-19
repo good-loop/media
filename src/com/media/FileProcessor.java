@@ -12,7 +12,8 @@ import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.log.Log;
 
 public class FileProcessor {
-	
+	// TODO: Would it be worth selecting quality reduction based on some maximum size?
+	// i.e always want mobile images below 300kB, so reduce image to get as close as possible without creating a grainy mess
 	public static final String STANDARD_RES_QUALITY = "70";
 	public static final String LOW_RES_QUALITY = "50";
 	// Images already below 50kB do not require further processing
@@ -46,8 +47,8 @@ public class FileProcessor {
 			command = "cp " + inputImagePath + " " + standardImagePath
 					+ "; " + "cp " + inputImagePath + " " + lowResImagePath;
 		} else {
-			command = "magick " + inputImagePath + " -quality " + STANDARD_RES_QUALITY + " " + standardImagePath
-					+ "; " + "magick " + inputImagePath + " -quality " + LOW_RES_QUALITY + " " + lowResImagePath;
+			command = "/usr/bin/convert " + inputImagePath + " -quality " + STANDARD_RES_QUALITY + " " + standardImagePath
+					+ "; " + "/usr/bin/convert " + inputImagePath + " -quality " + LOW_RES_QUALITY + " " + lowResImagePath;
 		}
 		List<String> commands = Arrays.asList("/bin/bash", "-c", command);
 		
