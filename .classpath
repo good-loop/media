@@ -7,5 +7,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/elasticsearch-java-client"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.webappbase"/>
 	<classpathentry kind="lib" path="/middleware/jakarta/commons-fileupload-1.2.1.jar" sourcepath="/middleware/jakarta/commons-fileupload-1.2.1-sources.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.web"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.bob"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
