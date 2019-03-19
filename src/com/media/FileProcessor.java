@@ -13,8 +13,8 @@ import com.winterwell.utils.log.Log;
 
 public class FileProcessor {
 	
-	public static final String STANDARD_RES_QUALITY = "800";
-	public static final String LOW_RES_QUALITY = "360";
+	public static final String STANDARD_RES_QUALITY = "70";
+	public static final String LOW_RES_QUALITY = "50";
 	// Images already below 50kB do not require further processing
 	public static final long MINIMUM_IMAGE_SIZE = 50000;
 	
@@ -46,8 +46,8 @@ public class FileProcessor {
 			command = "cp " + inputImagePath + " " + standardImagePath
 					+ "; " + "cp " + inputImagePath + " " + lowResImagePath;
 		} else {
-			command = "magick " + inputImagePath + " -resize " + STANDARD_RES_QUALITY + " " + standardImagePath
-					+ "; " + "magick " + inputImagePath + " -resize " + LOW_RES_QUALITY + " " + lowResImagePath;
+			command = "magick " + inputImagePath + " -quality " + STANDARD_RES_QUALITY + " " + standardImagePath
+					+ "; " + "magick " + inputImagePath + " -quality " + LOW_RES_QUALITY + " " + lowResImagePath;
 		}
 		List<String> commands = Arrays.asList("/bin/bash", "-c", command);
 		
