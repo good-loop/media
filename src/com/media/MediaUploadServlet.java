@@ -3,8 +3,12 @@ package com.media;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
@@ -46,7 +50,6 @@ public class MediaUploadServlet implements IServlet {
 	 */
 	long MAX_UPLOAD = 100 * 1024L * 1024L;
 	public static final String ACTION_UPLOAD = "upload";
-	static String LOW_RES_QUALITY = "360px";
 	/**
 	 * NB see ConfigBuilder.bytesFromString()
 	 * @param mAX_UPLOAD
@@ -55,9 +58,14 @@ public class MediaUploadServlet implements IServlet {
 		this.MAX_UPLOAD = maxBytes;
 	}
 	
+	// TODO: why are these needed? Do I actually need to have multiple of these?
 	public static final FileUploadField UPLOAD = new FileUploadField("upload");
 	public static final FileUploadField STANDARD_UPLOAD = new FileUploadField("standard_upload");
 	public static final FileUploadField MOBILE_UPLOAD = new FileUploadField("mobile_upload");
+	public static final FileUploadField RAW_UPLOAD = new FileUploadField("raw_upload");
+	
+	// Limit number of threads available to servlet at any given time
+	static ExecutorService pool = Executors.newFixedThreadPool(10);
 	
 	File webRoot = new File("web"); // = Dep.get(ISiteConfig.class).getWebRootDir();
 	
@@ -86,63 +94,54 @@ public class MediaUploadServlet implements IServlet {
 		// name from original filename - accessed via the pseudo field made by FileUploadField
 		String name = state.get(new Key<String>(UPLOAD.getFilenameField()), "");
 		// Get the file
+		// Random string appended to upload file name
+		// Means that the same uploaded asset will be saved to a different file each time
 		File tempFile = state.get(UPLOAD);
 		
 		// Do the storage!
-		Map<String, File> _assetArr = doUpload2(tempFile, name, cargo, state.getParameterMap());
+		Map<String, File> _assetArr = doUpload2(tempFile, name, state.getParameterMap());
+		
+		File rawFile = _assetArr.get("raw");
+		if( rawFile != null) {
+			addUploadedAssetToCargoAndState(rawFile, "raw", RAW_UPLOAD, cargo, state);
+		}
 		
 		File standardFile = _assetArr.get("standard");
 		if( standardFile != null ) {
-			Map<String, Object> standardParams = new ArrayMap();
-			
-			// TODO: _asset will just be overridden. Add map/array and make sure front-end can deal with this
-			// respond
-			standardParams.put("contentSize", standardFile.length());
-			standardParams.put("uploadDate", new Time().toISOString());
-			standardParams.put("author", state.getUserId());
-			standardParams.put("fileFormat", WebUtils2.getMimeType(standardFile));
-			standardParams.put("name", standardFile.getName());
-			standardParams.put("absolutePath", standardFile.getAbsolutePath());
-			
-			String relpath = FileUtils.getRelativePath(standardFile, webRoot);
-			// ugly code to avoid // inside the path whatever the path bits
-			if (relpath.startsWith("/")) relpath.substring(1);		
-			String url = server +(server.endsWith("/")? "" : "/")+relpath;
-			standardParams.put("url", url);
-			
-			cargo.put("standard", standardParams);
-			state.put(STANDARD_UPLOAD, standardFile);
-			
-			// all OK
-			state.addMessage(Printer.format("File {0} uploaded", standardFile.getAbsolutePath()));	
+			addUploadedAssetToCargoAndState(standardFile, "standard", STANDARD_UPLOAD, cargo, state);
 		}
 		
 		File mobileFile = _assetArr.get("mobile");		
 		if( mobileFile != null ) {
-			Map<String, Object> mobileParams = new ArrayMap();
-			
-			mobileParams.put("contentSize", mobileFile.length());
-			mobileParams.put("uploadDate", new Time().toISOString());
-			mobileParams.put("author", state.getUserId());
-			mobileParams.put("fileFormat", WebUtils2.getMimeType(mobileFile));
-			mobileParams.put("name", mobileFile.getName());
-			mobileParams.put("absolutePath", mobileFile.getAbsolutePath());
-			
-			String relpath = FileUtils.getRelativePath(mobileFile, webRoot);
-			// ugly code to avoid // inside the path whatever the path bits
-			if (relpath.startsWith("/")) relpath.substring(1);		
-			String url = server +(server.endsWith("/")? "" : "/")+relpath;
-			mobileParams.put("url", url);
-			
-			cargo.put("mobile", mobileParams);
-			state.put(MOBILE_UPLOAD, mobileFile);
-			
-			// all OK
-			state.addMessage(Printer.format("File {0} uploaded", mobileFile.getAbsolutePath()));	
+			addUploadedAssetToCargoAndState(mobileFile, "mobile", MOBILE_UPLOAD, cargo, state);
 		}
 		
 		return _assetArr;
 	}
+	
+	protected Map addUploadedAssetToCargoAndState(File asset, String label, FileUploadField uploadField, Map cargo, WebRequest state) {
+		Map<String, Object> params = new ArrayMap();
+		
+		params.put("contentSize", asset.length());
+		params.put("uploadDate", new Time().toISOString());
+		params.put("author", state.getUserId());
+		params.put("fileFormat", WebUtils2.getMimeType(asset));
+		params.put("name", asset.getName());
+		params.put("absolutePath", asset.getAbsolutePath());
+		
+		String relpath = FileUtils.getRelativePath(asset, webRoot);
+		// ugly code to avoid // inside the path whatever the path bits
+		if (relpath.startsWith("/")) relpath.substring(1);		
+		String url = server +(server.endsWith("/")? "" : "/")+relpath;
+		params.put("url", url);
+		
+		cargo.put(label, params);
+		state.put(uploadField, asset);
+		
+		// all OK
+		state.addMessage(Printer.format("File {0} uploaded", asset.getAbsolutePath()));
+		return cargo;
+	};
 	
 	/**
 	 * 
@@ -163,7 +162,7 @@ public class MediaUploadServlet implements IServlet {
 	 * @param params url parameters
 	 * @return
 	 */
-	public Map<String, File> doUpload2(File tempFile, String name, Map cargo, Map params) 
+	public Map<String, File> doUpload2(File tempFile, String name, Map params) 
 	{
 		if (tempFile==null) {
 			throw new MissingFieldException(UPLOAD);
@@ -174,25 +173,31 @@ public class MediaUploadServlet implements IServlet {
 		checkFileSize(tempFile);
 		// This is sort of atomic - an error will lead to some cleanup
 		// being done
+		File rawDest = null;
 		File standardDest = null;
 		File mobileDest = null;
 		try {
 			// Do the upload
 			Log.i("Accepting upload of "+tempFile.length()+" bytes, temp location "+tempFile.getAbsolutePath(), Level.FINE);
+			rawDest = getDestFile("raw", tempFile);
+			// Moderately compressed version. Generated by either doProcessImage or doProcessVideo
 			standardDest = getDestFile("standard", tempFile);
-			// Mobile file will be generated by either doProcessImage or doProcessVideo
+			// Most compressed version. Generated by either doProcessImage or doProcessVideo
 			mobileDest = getDestFile("mobile", tempFile);
 			
 			assert tempFile.exists() : "Destination file doesn't exist: "+tempFile.getAbsolutePath();
 			Log.report(tempFile.length()+" bytes uploaded to "+tempFile.getAbsolutePath(), Level.FINE);
-			Map _assetArr = new ArrayMap();
+			// Move to final resting place
+			FileUtils.move(tempFile, rawDest);
+			// Map of absolute paths
+			Map<String, File> _assetArr = new ArrayMap();
+			_assetArr.put("raw", rawDest);
 			if (FileUtils.isImage(tempFile)) {
-				// Standard file is just unmodified upload file.
-				// Move in to final place
-				FileUtils.move(tempFile, standardDest);
-				_assetArr = doProcessImage(standardDest, mobileDest);
+				FileProcessor imageProcessor = FileProcessor.ImageProcessor(rawDest, standardDest, mobileDest);
+				_assetArr = imageProcessor.run(pool);
 			} else if (FileUtils.isVideo(tempFile)) {
-				_assetArr = doProcessVideo(tempFile, standardDest, mobileDest);
+				FileProcessor videoProcessor = FileProcessor.VideoProcessor(rawDest, standardDest, mobileDest);
+				_assetArr = videoProcessor.run(pool);
 			}
 			// done
 			return _assetArr;
@@ -203,76 +208,7 @@ public class MediaUploadServlet implements IServlet {
 			throw Utils.runtime(e);
 		}
 	}
-	
-	/** User can specify a number of image post-processing options via URL params **/
-	protected Map<String, File> doProcessImage(File standardDest, File mobileDest) {			
-		String imagePath = standardDest.getAbsolutePath();
-		String lowResImagePath = mobileDest.getAbsolutePath();
 
-		String commands = "";
-		// TODO: change this to use specific sizes rather than a random percentage
-		commands += "magick " + imagePath + " -resize " + LOW_RES_QUALITY + " " + lowResImagePath;
-		
-		// Don't want to block server while executing bash script
-		if( !commands.isEmpty() ) {
-			final String[] threadCommands = new String[] {"/bin/bash", "-c", commands};
-			Thread processThread = new Thread(() -> {
-				ProcessBuilder process = new ProcessBuilder(threadCommands);
-		        // Merge System.err and System.out
-				process.redirectErrorStream(true);
-		        // Inherit System.out as redirect output stream
-				process.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-				try {
-					process.start();	
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			});
-			processThread.start();
-		}
-		
-		Map out = new ArrayMap();
-		out.put("standard", imagePath);
-		out.put("mobile", lowResImagePath);
-		return out;
-	}
-	
-	/** Source needs to be in different location to outputs: can't write to file you're reading from **/
-	protected Map<String, File> doProcessVideo(File tempFile, File standardDest, File mobileDest) {
-		String inputVideoPath = tempFile.getAbsolutePath();
-		String lowResVideoPath = mobileDest.getAbsolutePath();
-		String highResVideoPath = standardDest.getAbsolutePath();
-		
-		String commands = "";
-		
-		commands += "HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Medium 5 Minutes 480p30' " + "--output " + lowResVideoPath; 
-		commands += "; " + "HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Large 3 Minutes 720p30' " + "--output " + highResVideoPath;
-		// Execute commands in separate thread
-		// Don't want to block server while executing bash script
-		if( !commands.isEmpty() ) {
-			// Handbrake will only run if you add the /bin/bash -c before command
-			// https://stackoverflow.com/questions/44638025/how-to-use-process-builder-in-java-to-run-linux-shell-command
-			final String[] threadCommands = new String[] {"/bin/bash", "-c", commands};
-			Thread processThread = new Thread(() -> {
-				ProcessBuilder process = new ProcessBuilder(threadCommands);
-				// Print any errors from process to the console
-				process.redirectErrorStream(true);
-				process.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-				try {
-					process.start();	
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			});
-			processThread.start();
-		}
-		// Will return before above thread has actually finished executing
-		Map out = new ArrayMap();
-		out.put("standard", new File(highResVideoPath));
-		out.put("mobile", new File(lowResVideoPath));
-		return out;
-	}
-	
 	private void checkFileSize(File tempFile) {
 		if (tempFile.length() > MAX_UPLOAD) { // TODO detect this before uploading a 10gb movie!
 			FileUtils.delete(tempFile);
