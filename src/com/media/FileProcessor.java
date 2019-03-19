@@ -15,6 +15,8 @@ public class FileProcessor {
 	
 	public static final String STANDARD_RES_QUALITY = "800";
 	public static final String LOW_RES_QUALITY = "360";
+	// Images already below 50kB do not require further processing
+	public static final long MINIMUM_IMAGE_SIZE = 50000;
 	
 	public File rawDest;
 	public File standardDest;
@@ -31,13 +33,22 @@ public class FileProcessor {
 		this.commands = commands;
 	}
 	
+	/** Assumes that there will already be an image in /uploads/raw for it to find **/
 	public static FileProcessor ImageProcessor(File rawDest, File standardDest, File mobileDest) {
 		String inputImagePath = rawDest.getAbsolutePath();
 		String standardImagePath = standardDest.getAbsolutePath();
 		String lowResImagePath = mobileDest.getAbsolutePath();
 		
-		String command = "magick " + inputImagePath + " -resize " + STANDARD_RES_QUALITY + " " + standardImagePath
-		+ "; " + "magick " + inputImagePath + " -resize " + LOW_RES_QUALITY + " " + lowResImagePath;
+		String command = "";
+		// Raw image will be placed in raw, standard and mobile
+		if( rawDest.length() < MINIMUM_IMAGE_SIZE ) {
+			Log.d("Image file is below 50kB. No processing will be done, but the raw image will be copied to the standard, mobile and raw directories");
+			command = "cp " + inputImagePath + " " + standardImagePath
+					+ "; " + "cp " + inputImagePath + " " + lowResImagePath;
+		} else {
+			command = "magick " + inputImagePath + " -resize " + STANDARD_RES_QUALITY + " " + standardImagePath
+					+ "; " + "magick " + inputImagePath + " -resize " + LOW_RES_QUALITY + " " + lowResImagePath;
+		}
 		List<String> commands = Arrays.asList("/bin/bash", "-c", command);
 		
 		return new FileProcessor(rawDest, standardDest, mobileDest, commands);
