@@ -60,8 +60,8 @@ public class FileProcessor {
 		String lowResVideoPath = mobileDest.getAbsolutePath();
 		String highResVideoPath = standardDest.getAbsolutePath();
 		
-		String command = "HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Medium 5 Minutes 480p30' " + "--output " + lowResVideoPath
-		+ "; " + "HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Large 3 Minutes 720p30' " + "--output " + highResVideoPath;
+		String command = "taskset -c 0,1 HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Medium 5 Minutes 480p30' " + "--output " + lowResVideoPath
+		+ "; " + "taskset -c 0,1 HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Large 3 Minutes 720p30' " + "--output " + highResVideoPath;
 		List<String> commands = Arrays.asList("/bin/bash", "-c", command);
 		
 		return new FileProcessor(rawDest, standardDest, mobileDest, commands);
