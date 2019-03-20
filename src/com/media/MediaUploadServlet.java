@@ -46,9 +46,9 @@ import com.winterwell.youagain.client.YouAgainClient;
 /** Wraps generic UploadServlet with media.good-loop specific configs **/ 
 public class MediaUploadServlet implements IServlet {
 	/**
-	 * 10mb
+	 * ~525mb
 	 */
-	long MAX_UPLOAD = 100 * 1024L * 1024L;
+	long MAX_UPLOAD = 500L * 1024L * 1024L;
 	public static final String ACTION_UPLOAD = "upload";
 	/**
 	 * NB see ConfigBuilder.bytesFromString()
@@ -269,9 +269,7 @@ public class MediaUploadServlet implements IServlet {
 	@Override
 	public void process(WebRequest state) throws IOException {
 		// ...upload size
-		MediaConfig conf = Dep.get(MediaConfig.class);				
-		long maxUpload = ConfigBuilder.bytesFromString(conf.maxVideoUpload);
-		this.setMaxUpload(maxUpload);
+		MediaConfig conf = Dep.get(MediaConfig.class);
 
 		if (conf.uploadDir!=null) {
 			this.setUploadDir(conf.uploadDir);
