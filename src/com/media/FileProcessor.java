@@ -20,6 +20,8 @@ public class FileProcessor {
 	public static final String LOW_RES_QUALITY = "50";
 	// Images already below 50kB do not require further processing
 	public static final long MINIMUM_IMAGE_SIZE = 50000;
+	// File types supported by jpegoption
+	public static final List<String> JPEGOPTION_SUPPORTED_TYPES = Arrays.asList("jpg", "jpeg");
 	
 	public File rawDest;
 	public File standardDest;
@@ -42,13 +44,15 @@ public class FileProcessor {
 		String standardImagePath = standardDest.getAbsolutePath();
 		String lowResImagePath = mobileDest.getAbsolutePath();
 		
+		String fileType = FileUtils.getType(rawDest.getName());
+		
 		String command = "";
 		// Raw image will be placed in raw, standard and mobile
 		if( rawDest.length() < MINIMUM_IMAGE_SIZE ) {
 			Log.d("Image file is below 50kB. No processing will be done, but the raw image will be copied to the standard, mobile and raw directories");
 			command = "cp " + inputImagePath + " " + standardImagePath
 					+ "; " + "cp " + inputImagePath + " " + lowResImagePath;
-		} else if(FileUtils.getType(rawDest.getName()).equals("png")) {
+		} else if(fileType.equals("png")) {
 			// optipng will iterate through different png compression methods and keep the result with smallest file size
 			command = "cp " + inputImagePath + " " + standardImagePath
 					// Compress the image
@@ -57,7 +61,9 @@ public class FileProcessor {
 					+ "; cp " +  standardImagePath + " " + lowResImagePath;
 		} else {
 			command = "/usr/bin/convert " + inputImagePath + " -quality " + STANDARD_RES_QUALITY + " " + standardImagePath
-					+ "; " + "/usr/bin/convert " + inputImagePath + " -quality " + LOW_RES_QUALITY + " " + lowResImagePath;
+					+ (JPEGOPTION_SUPPORTED_TYPES.contains(fileType) ? "&& /usr/bin/jpegoptim " + standardImagePath : "")
+					+ "; " + "/usr/bin/convert " + inputImagePath + " -quality " + LOW_RES_QUALITY + " " + lowResImagePath
+					+ (JPEGOPTION_SUPPORTED_TYPES.contains(fileType) ? "&& /usr/bin/jpegoptim " + lowResImagePath : "");
 		}
 		List<String> commands = Arrays.asList("/bin/bash", "-c", command);
 		
