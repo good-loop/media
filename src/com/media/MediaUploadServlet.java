@@ -196,7 +196,7 @@ public class MediaUploadServlet implements IServlet {
 				FileProcessor imageProcessor = FileProcessor.ImageProcessor(rawDest, standardDest, mobileDest);
 				_assetArr = imageProcessor.run(pool);
 			} else if (FileUtils.isVideo(tempFile)) {
-				FileProcessor videoProcessor = FileProcessor.VideoProcessor(rawDest, standardDest, mobileDest);
+				FileProcessor videoProcessor = FileProcessor.VideoProcessor(rawDest, standardDest, mobileDest, params);
 				_assetArr = videoProcessor.run(pool);
 			}
 			// done

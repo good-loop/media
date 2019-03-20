@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 import com.winterwell.utils.Proc;
 import com.winterwell.utils.Utils;
@@ -63,13 +64,27 @@ public class FileProcessor {
 		return new FileProcessor(rawDest, standardDest, mobileDest, commands);
 	}
 
-	public static FileProcessor VideoProcessor(File rawDest, File standardDest, File mobileDest) {
+	public static FileProcessor VideoProcessor(File rawDest, File standardDest, File mobileDest, Map params) {
 		String inputVideoPath = rawDest.getAbsolutePath();
 		String lowResVideoPath = mobileDest.getAbsolutePath();
 		String highResVideoPath = standardDest.getAbsolutePath();
 		
-		String command = "taskset -c 0,1 HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Medium 5 Minutes 480p30' " + "--output " + lowResVideoPath
-		+ "; " + "taskset -c 0,1 HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Large 3 Minutes 720p30' " + "--output " + highResVideoPath;
+		List<Object> cropFactors = Arrays.asList(
+				params.get("crop-top"),
+				params.get("crop-bottom"),
+				params.get("crop-left"),
+				params.get("crop-right")
+		);
+		
+		// Add cropping parameters if these have been specified
+		String cropCommand = ( cropFactors.stream().anyMatch(v -> v != null) ) 
+							? " --crop " + cropFactors.stream().reduce( "", (out, s) ->  out + (s != null ? (String) s : "0") + ":")
+							: "";
+		
+		String command = "taskset -c 0,1 HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Medium 5 Minutes 480p30' " + "--output " + lowResVideoPath	
+				+ cropCommand
+				+ "; " + "taskset -c 0,1 HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Large 3 Minutes 720p30' " + "--output " + highResVideoPath
+				+ cropCommand;
 		List<String> commands = Arrays.asList("/bin/bash", "-c", command);
 		
 		return new FileProcessor(rawDest, standardDest, mobileDest, commands);
