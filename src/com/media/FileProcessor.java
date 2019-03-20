@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutorService;
 import com.winterwell.utils.Proc;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
+import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
 
 public class FileProcessor {
@@ -46,6 +47,13 @@ public class FileProcessor {
 			Log.d("Image file is below 50kB. No processing will be done, but the raw image will be copied to the standard, mobile and raw directories");
 			command = "cp " + inputImagePath + " " + standardImagePath
 					+ "; " + "cp " + inputImagePath + " " + lowResImagePath;
+		} else if(FileUtils.getType(rawDest.getName()).equals("png")) {
+			// optipng will iterate through different png compression methods and keep the result with smallest file size
+			command = "cp " + inputImagePath + " " + standardImagePath
+					// Compress the image
+					+ "; /usr/bin/optipng " + standardImagePath
+					// Copy result to mobile directory
+					+ "; cp " +  standardImagePath + " " + lowResImagePath;
 		} else {
 			command = "/usr/bin/convert " + inputImagePath + " -quality " + STANDARD_RES_QUALITY + " " + standardImagePath
 					+ "; " + "/usr/bin/convert " + inputImagePath + " -quality " + LOW_RES_QUALITY + " " + lowResImagePath;
