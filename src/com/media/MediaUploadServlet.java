@@ -214,16 +214,6 @@ public class MediaUploadServlet implements IServlet {
 			FileUtils.delete(tempFile);
 			throw new FileTooLargeException("The file is too large. There is a limit of "+StrUtils.toNSigFigs(MAX_UPLOAD/1100000.0, 2)+"mb on uploads.");
 		}
-		// is it an image?
-	//	if (FileUtils.isImage(tempFile) && tempFile.length() >= Twitter.PHOTO_SIZE_LIMIT) {
-	//		FileUtils.delete(tempFile);
-	//		throw new FileTooLargeException("The image file is too large. There is a limit of "+StrUtils.toNSigFigs(Twitter.PHOTO_SIZE_LIMIT/1100000.0, 2)+"mb on image uploads.");			
-	//	}
-	//	// video?
-	//	if (FileUtils.isVideo(tempFile) && tempFile.length() >= Twitter.VIDEO_SIZE_LIMIT) {
-	//		FileUtils.delete(tempFile);
-	//		throw new FileTooLargeException("The video file is too large. There is a limit of "+StrUtils.toNSigFigs(Twitter.VIDEO_SIZE_LIMIT/1100000.0, 2)+"mb on image uploads.");			
-	//	}
 	}
 	
 	File uploadsDir = new File("web/uploads");
