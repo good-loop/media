@@ -21,6 +21,11 @@ public class MediaVideoObject {
 		this.duration = calculateDuration(videoFile);
 	}
 	
+	/** Very similar to calculation in {@link GLUtils}
+	 * Wanted to just return Dt rather than VideoObject as, for the moment, data is returned before video processing is complete
+	 * Meant that VideoObject could not be populated correctly
+	 * TODO: come back and reasses that assumption
+	 *  **/
 	public static Dt calculateDuration(File videoFile) {
 		if( videoFile.isFile() ) {
 			Proc proc = new Proc("mediainfo "+videoFile.getAbsolutePath());
