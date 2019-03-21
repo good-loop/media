@@ -8,17 +8,22 @@ import java.util.regex.Pattern;
 import com.winterwell.utils.Proc;
 import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.Utils;
+import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.time.Dt;
 import com.winterwell.utils.time.TUnit;
 
-public class MediaVideoObject {
-	
-	public File videoFile;
+public class MediaObject {
+	public File file;
+	// Will need to be set externally
 	public Dt duration;
 	
-	public MediaVideoObject(File videoFile) {
-		this.videoFile = videoFile;
-		this.duration = calculateDuration(videoFile);
+	
+	public MediaObject(File file) {
+		this.file = file;
+	}
+	
+	public Dt calculateDuration() {
+		return calculateDuration(this.file);
 	}
 	
 	/** Very similar to calculation in {@link GLUtils}
@@ -27,7 +32,7 @@ public class MediaVideoObject {
 	 * TODO: come back and reasses that assumption
 	 *  **/
 	public static Dt calculateDuration(File videoFile) {
-		if( videoFile.isFile() ) {
+		if( videoFile.isFile() && FileUtils.isVideo(videoFile) ) {
 			Proc proc = new Proc("mediainfo "+videoFile.getAbsolutePath());
 			proc.start();
 			int ok = proc.waitFor(2000);

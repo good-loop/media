@@ -13,7 +13,8 @@ import java.util.logging.Level;
 
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
-import com.media.data.MediaVideoObject;
+import com.media.data.MediaObject;
+import com.media.data.MediaObject;
 import com.winterwell.utils.Dep;
 import com.winterwell.utils.FailureException;
 import com.winterwell.utils.Key;
@@ -26,6 +27,7 @@ import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.io.ConfigBuilder;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
+import com.winterwell.utils.time.Dt;
 import com.winterwell.utils.time.Time;
 import com.winterwell.utils.web.WebUtils2;
 import com.winterwell.web.FileTooLargeException;
@@ -89,7 +91,7 @@ public class MediaUploadServlet implements IServlet {
 	 * @return asset for the uploaded file
 	 * @throws WebInputException
 	 */
-	private Map<String, MediaVideoObject> doUpload(WebRequest state, Map cargo) throws WebInputException {
+	private Map<String, MediaObject> doUpload(WebRequest state, Map cargo) throws WebInputException {
 		if (cargo==null) cargo = new ArrayMap(); // avoid NPEs
 		state.processMultipartIncoming(new ArrayMap<String, AField>());
 		// name from original filename - accessed via the pseudo field made by FileUploadField
@@ -100,41 +102,48 @@ public class MediaUploadServlet implements IServlet {
 		File tempFile = state.get(UPLOAD);
 		
 		// Do the storage!
-		Map<String, MediaVideoObject> _assetArr = doUpload2(tempFile, name, state.getParameterMap());
+		Map<String, MediaObject> _assetArr = doUpload2(tempFile, name, state.getParameterMap());
 		
-		MediaVideoObject rawFile = _assetArr.get("raw");
+		MediaObject rawFile = _assetArr.get("raw");
+		// Will just be null if the file is not a video
+		Dt rawDuration = rawFile.calculateDuration();
+		
 		if( rawFile != null) {
+			rawFile.duration = rawDuration;
 			addUploadedAssetToCargoAndState(rawFile, "raw", RAW_UPLOAD, cargo, state);
 		}
 		
-		MediaVideoObject standardFile = _assetArr.get("standard");
+		MediaObject standardFile = _assetArr.get("standard");
 		if( standardFile != null ) {
 			// Seems fair to assume that the duration will not have changed based on processing options
-			if( standardFile.duration == null ) standardFile.duration = rawFile.duration;
+			if( standardFile.duration == null ) standardFile.duration = rawDuration;
 			addUploadedAssetToCargoAndState(standardFile, "standard", STANDARD_UPLOAD, cargo, state);
 		}
 		
-		MediaVideoObject mobileFile = _assetArr.get("mobile");		
+		MediaObject mobileFile = _assetArr.get("mobile");		
 		if( mobileFile != null ) {
 			// Seems fair to assume that the duration will not have changed based on processing options
-			if( mobileFile.duration == null ) mobileFile.duration = rawFile.duration;
+			if( mobileFile.duration == null ) mobileFile.duration = rawDuration;
 			addUploadedAssetToCargoAndState(mobileFile, "mobile", MOBILE_UPLOAD, cargo, state);
 		}
 		
 		return _assetArr;
 	}
 	
-	protected Map addUploadedAssetToCargoAndState(MediaVideoObject assetObject, String label, FileUploadField uploadField, Map cargo, WebRequest state) {
-		File asset = assetObject.videoFile;
+	protected Map addUploadedAssetToCargoAndState(MediaObject assetObject, String label, FileUploadField uploadField, Map cargo, WebRequest state) {
+		File asset = assetObject.file;
 		Map<String, Object> params = new ArrayMap();
-		MediaVideoObject.calculateDuration(asset);
+
 		params.put("contentSize", asset.length());
 		params.put("uploadDate", new Time().toISOString());
 		params.put("author", state.getUserId());
 		params.put("fileFormat", WebUtils2.getMimeType(asset));
 		params.put("name", asset.getName());
 		params.put("absolutePath", asset.getAbsolutePath());
-		params.put("duration", assetObject.duration.getValue());
+		
+		if( assetObject.duration != null ) {
+			params.put("duration", assetObject.duration.getValue());	
+		}
 		
 		String relpath = FileUtils.getRelativePath(asset, webRoot);
 		// ugly code to avoid // inside the path whatever the path bits
@@ -169,7 +178,7 @@ public class MediaUploadServlet implements IServlet {
 	 * @param params url parameters
 	 * @return
 	 */
-	public Map<String, MediaVideoObject> doUpload2(File tempFile, String name, Map params) 
+	public Map<String, MediaObject> doUpload2(File tempFile, String name, Map params) 
 	{
 		if (tempFile==null) {
 			throw new MissingFieldException(UPLOAD);
@@ -197,9 +206,8 @@ public class MediaUploadServlet implements IServlet {
 			// Move to final resting place
 			FileUtils.move(tempFile, rawDest);
 			// Map of absolute paths
-			Map<String, MediaVideoObject> _assetArr = new ArrayMap();
-			// If asset is neither an image nor a video, will only return "raw"
-			_assetArr.put("raw", new MediaVideoObject(rawDest));
+			Map<String, MediaObject> _assetArr = new ArrayMap();
+
 			if (FileUtils.isImage(tempFile)) {
 				FileProcessor imageProcessor = FileProcessor.ImageProcessor(rawDest, standardDest, mobileDest);
 				_assetArr = imageProcessor.run(pool);
@@ -285,10 +293,10 @@ public class MediaUploadServlet implements IServlet {
 		if (ServletFileUpload.isMultipartContent(state.getRequest())) {
 	//		try {
 			Map cargo = new ArrayMap();			
-			Map<String, MediaVideoObject> asset = doUpload(state, cargo);
+			Map<String, MediaObject> asset = doUpload(state, cargo);
 			state.sendRedirect();
 			
-			WebUtils2.CORS(state, false);
+			WebUtils2.CORS(state, true);
 			// loosely based on http://schema.org/MediaObject
 			WebUtils2.sendJson(new JsonResponse(state, cargo), state);
 			

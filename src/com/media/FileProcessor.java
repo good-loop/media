@@ -7,7 +7,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
-import com.media.data.MediaVideoObject;
+import com.media.data.MediaObject;
+import com.media.data.MediaObject;
 import com.winterwell.utils.Proc;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
@@ -99,7 +100,7 @@ public class FileProcessor {
 	
 	/** Perform the given conversion operation 
 	 *  Need to provide pool of threads to run from **/
-	public Map<String, MediaVideoObject> run(ExecutorService pool) {
+	public Map<String, MediaObject> run(ExecutorService pool) {
 		pool.submit(() -> {
 				Proc process = new Proc(this.commands);
 			try {
@@ -115,9 +116,11 @@ public class FileProcessor {
 		});
 		
 		Map out = new ArrayMap();
-		out.put("raw", new MediaVideoObject(this.rawDest));		
-		out.put("standard", new MediaVideoObject(this.standardDest));
-		out.put("mobile", new MediaVideoObject(this.mobileDest));
+		
+		out.put("raw", new MediaObject(this.rawDest));		
+		out.put("standard", new MediaObject(this.standardDest));
+		out.put("mobile", new MediaObject(this.mobileDest));
+
 		return out;
 	}
 }
