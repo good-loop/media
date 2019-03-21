@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
+import com.media.data.MediaVideoObject;
 import com.winterwell.utils.Proc;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
@@ -20,7 +21,7 @@ public class FileProcessor {
 	public static final String LOW_RES_QUALITY = "50";
 	// Images already below 50kB do not require further processing
 	public static final long MINIMUM_IMAGE_SIZE = 50000;
-	// File types supported by jpegoption
+	// File types supported by jpegoptim
 	public static final List<String> JPEGOPTION_SUPPORTED_TYPES = Arrays.asList("jpg", "jpeg");
 	
 	public File rawDest;
@@ -98,7 +99,7 @@ public class FileProcessor {
 	
 	/** Perform the given conversion operation 
 	 *  Need to provide pool of threads to run from **/
-	public Map run(ExecutorService pool) {
+	public Map<String, MediaVideoObject> run(ExecutorService pool) {
 		pool.submit(() -> {
 				Proc process = new Proc(this.commands);
 			try {
@@ -114,9 +115,9 @@ public class FileProcessor {
 		});
 		
 		Map out = new ArrayMap();
-		out.put("raw", this.rawDest);		
-		out.put("standard", this.standardDest);
-		out.put("mobile", this.mobileDest);
+		out.put("raw", new MediaVideoObject(this.rawDest));		
+		out.put("standard", new MediaVideoObject(this.standardDest));
+		out.put("mobile", new MediaVideoObject(this.mobileDest));
 		return out;
 	}
 }
