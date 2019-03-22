@@ -142,7 +142,8 @@ public class MediaUploadServlet implements IServlet {
 		params.put("absolutePath", asset.getAbsolutePath());
 		
 		if( assetObject.duration != null ) {
-			params.put("duration", assetObject.duration.getValue());	
+			// Return duration rounded to nearest integer
+			params.put("duration", (int) Math.round(assetObject.duration.getValue()));	
 		}
 		
 		String relpath = FileUtils.getRelativePath(asset, webRoot);
