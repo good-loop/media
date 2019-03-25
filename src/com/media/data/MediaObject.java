@@ -2,6 +2,7 @@ package com.media.data;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -9,6 +10,7 @@ import com.winterwell.utils.Proc;
 import com.winterwell.utils.StrUtils;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.io.FileUtils;
+import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.Dt;
 import com.winterwell.utils.time.TUnit;
 
@@ -33,7 +35,7 @@ public class MediaObject {
 	 *  **/
 	public static Dt calculateDuration(File videoFile) {
 		if( videoFile.isFile() && FileUtils.isVideo(videoFile) ) {
-			Proc proc = new Proc("mediainfo "+videoFile.getAbsolutePath());
+			Proc proc = new Proc("mediainfo -f "+videoFile.getAbsolutePath());
 			proc.start();
 			int ok = proc.waitFor(2000);
 			String output = proc.getOutput();
@@ -44,16 +46,14 @@ public class MediaObject {
 				String k = line.substring(0, i).trim();
 				String v = line.substring(i+1).trim();
 				if (v.isEmpty() || !k.equals("Duration")) continue;
-				
-				Pattern pnu = Pattern.compile("(\\d+)([a-z]+)");
-				Matcher nu = pnu.matcher(v);
-				Dt d = new Dt(0, TUnit.SECOND);
-				while(nu.find()) {
-					TUnit u = com.winterwell.utils.time.TimeUtils.getTUnit(nu.group(2));
-					Dt b = new Dt(Double.parseDouble(nu.group(1)), u);
-					d = d.plus(b);
+				// Will return a list of "Durations" in different formats
+				// Only care about the version in Milliseconds.
+				// Expect this version to appear first
+				try {
+					return new Dt(TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(v)), TUnit.SECOND);
+				} catch(Exception e){
+					continue;
 				}
-				return d;
 			}
 		}
 
