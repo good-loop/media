@@ -96,8 +96,9 @@ public class MediaUploadServlet implements IServlet {
 		state.processMultipartIncoming(new ArrayMap<String, AField>());
 		// name from original filename - accessed via the pseudo field made by FileUploadField
 		String name = state.get(new Key<String>(UPLOAD.getFilenameField()), "");
+
 		// Get the file
-		// Random string appended to upload file name
+		// Random string appended to upload file name??
 		// Means that the same uploaded asset will be saved to a different file each time
 		File tempFile = state.get(UPLOAD);
 		
@@ -295,7 +296,11 @@ public class MediaUploadServlet implements IServlet {
 	//		try {
 			Map cargo = new ArrayMap();			
 			Map<String, MediaObject> asset = doUpload(state, cargo);
-			state.sendRedirect();
+			
+			// redirect?? use-case??
+			if (state.sendRedirect()) {
+				return;
+			}
 			
 			WebUtils2.CORS(state, true);
 			// loosely based on http://schema.org/MediaObject
