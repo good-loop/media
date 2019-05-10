@@ -5,6 +5,9 @@ server {
 	index index.html;
  
 	server_name localmedia.good-loop.com media.good-loop.com;
+
+	access_log /var/log/nginx/localmedia.good-loop.com/access.log;
+	error_log /var/log/nginx/localmedia.good-loop.com/error.log;
  
 	
 	location / {
