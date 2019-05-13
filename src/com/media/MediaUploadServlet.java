@@ -297,12 +297,13 @@ public class MediaUploadServlet implements IServlet {
 			Map cargo = new ArrayMap();			
 			Map<String, MediaObject> asset = doUpload(state, cargo);
 			
+			WebUtils2.CORS(state, true);
+			
 			// redirect?? use-case??
 			if (state.sendRedirect()) {
 				return;
 			}
 			
-			WebUtils2.CORS(state, true);
 			// loosely based on http://schema.org/MediaObject
 			WebUtils2.sendJson(new JsonResponse(state, cargo), state);
 			
