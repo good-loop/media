@@ -43,6 +43,7 @@ public class MediaMain extends AMain<MediaConfig> {
 	
 	@Override
 	protected void addJettyServlets(JettyLauncher jl) {
+		jl.addServlet("/mediacache/*", new HttpServletWrapper(MediaCacheServlet::new));
 		jl.addServlet("/*", new HttpServletWrapper(MediaUploadServlet::new));
 		super.addJettyServlets(jl);
 	}
