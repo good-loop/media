@@ -43,6 +43,7 @@ public class MediaCacheServlet implements IServlet {
 	
 	@Override
 	public void process(WebRequest state) throws IOException {
+		URL reqUrl = new URL(state.getRequestUrl());
 		// Only the adunit (or someone who has taken a few minutes to figure out the cache system) is allowed to cache new files
 		if (!"good-loop-ad-unit".equals(state.get("from"))) {
 			WebUtils2.sendError(403, "You're not allowed to use this service", state.getResponse());
@@ -50,7 +51,7 @@ public class MediaCacheServlet implements IServlet {
 		}
 		
 		// Strip off leading path components to get filename (we'll be storing to this)
-		String filename = new URL(state.getRequestUrl()).getPath().replaceAll("^.*\\/", "");
+		String filename = reqUrl.getPath().replaceAll("^.*\\/", "");
 		
 		// Is someone trying to cache something they shouldn't?
 		String extension = filename.substring(filename.lastIndexOf('.'));
@@ -80,8 +81,9 @@ public class MediaCacheServlet implements IServlet {
 		FileUtils.move(tmpFile, destFile);
 		
 		// Redirect the caller to the same place they originally tried - which will now be a file hit
-		// Modifying the URL with a trailing ? because browsers FOR SOME WEIRD REASON don't like a no-op redirect
-		state.setRedirect(state.getRequestUrl() + "?");
+		// Remove the query string so it's not a circular redirect
+		URL redirectUrl = new URL(reqUrl.getProtocol(), reqUrl.getHost(), reqUrl.getPort(), reqUrl.getPath());
+		state.setRedirect(redirectUrl.toString());
 		state.sendRedirect();
 	}
 }
