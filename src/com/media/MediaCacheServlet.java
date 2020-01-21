@@ -31,7 +31,7 @@ public class MediaCacheServlet implements IServlet {
 	// Don't cache more than 10mb? TODO Think about this for video purposes...
 	private long maxSize = 10000000L;
 	
-	private File webRoot = new File("web/mediacache");
+	private File webRoot = new File("web/uploads/mediacache");
 	{
 		if (!webRoot.exists()) {
 			boolean ok = webRoot.mkdirs();
