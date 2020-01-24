@@ -6,7 +6,11 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.winterwell.utils.FailureException;
 import com.winterwell.utils.io.FileUtils;
@@ -25,6 +29,9 @@ import com.winterwell.web.app.WebRequest;
  *
  */
 public class MediaCacheServlet implements IServlet {
+	// Track in-progress caching operations so rapid-fire requests don't make a mess
+	Map<String, Lock> inProgress = new HashMap<String, Lock>();
+	
 	// Let's not cache EVERYTHING any rando throws at us.
 	private List<String> acceptExtensions = Arrays.asList(".png", ".jpg", ".jpeg", ".gif", ".svg", ".mp4", ".mpeg4", ".m4v", ".webm");
 	
@@ -64,21 +71,38 @@ public class MediaCacheServlet implements IServlet {
 		String origUrlEncoded = filename.replaceAll("\\..*$", "");
 		String origUrl = new String(decoder.decode(origUrlEncoded));
 		
-		URL fart = new URL(origUrl);
-		HttpURLConnection conn = (HttpURLConnection) fart.openConnection();
-		long size = Integer.parseInt(conn.getHeaderField("Content-Length"));
-		if (size > maxSize) {
-			WebUtils2.sendError(403, "File too big to cache: " + (size / 1024) + "KB", state.getResponse());
+		// Don't let other threads try and cache the same file if rapid-fire requests come in!
+		if (!inProgress.containsKey(origUrl)) {
+			Lock running = new ReentrantLock();
+			inProgress.put(origUrl, running);
+			running.lock();
+			
+			// Check the file size before we load the whole file
+			URL origUrlObj = new URL(origUrl);
+			HttpURLConnection conn = (HttpURLConnection) origUrlObj.openConnection();
+			long size = Integer.parseInt(conn.getHeaderField("Content-Length"));
+			if (size > maxSize) {
+				WebUtils2.sendError(403, "File too big to cache: " + (size / 1024) + "KB", state.getResponse());
+			}
+			conn.disconnect();
+					
+			// Fetch the file. Could reuse the connection we used to check size but FakeBrowser skips a LOT of boilerplate
+			FakeBrowser fb = new FakeBrowser();
+			File tmpFile = fb.getFile(origUrl);
+			
+			// Move the file to the location it was originally requested from, so future calls will be a file hit
+			File destFile = FileUtils.getNewFile(new File(webRoot.getAbsolutePath(), filename));
+			FileUtils.move(tmpFile, destFile);
+			
+			// Tell any other threads looking for this file that it's ready
+			running.unlock();
+			inProgress.remove(origUrl);
+		} else {
+			// Another thread is already caching the file, wait for it to finish
+			Lock waitFor = inProgress.get(origUrl);
+			waitFor.lock();
+			waitFor.unlock();
 		}
-		conn.disconnect();
-				
-		// Fetch the file. Could reuse the connection we used to check size but this skips a LOT of boilerplate
-		FakeBrowser fb = new FakeBrowser();
-		File tmpFile = fb.getFile(origUrl);
-		
-		// Move the file to the location it was originally requested from, so future calls will be a file hit
-		File destFile = FileUtils.getNewFile(new File(webRoot.getAbsolutePath(), filename));
-		FileUtils.move(tmpFile, destFile);
 		
 		// Redirect the caller to the same place they originally tried - which will now be a file hit
 		// Remove the query string so it's not a circular redirect
