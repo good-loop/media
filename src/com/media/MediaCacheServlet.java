@@ -24,6 +24,10 @@ import com.winterwell.web.app.WebRequest;
  * doesn't match a previously-cached file, this servlet will catch your request,
  * retrieve the file, and cache it.
  * See counterpart code in adserver/adunit/src/util/utils.js --> function wrapUrl
+ * 
+ * TODO implement image scaling, so users can upload a 10mb hi-res logo image, and
+ * the adunit just scales it.
+ * 
  * TODO Implement better security - eg sign with salted hash of a valid ad ID.
  * @author roscoe
  *
