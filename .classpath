@@ -10,5 +10,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.bob"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/winterwell.datalog"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="dependencies/commons-fileupload.jar"/>
+	<classpathentry kind="lib" path="dependencies/commons-io.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
