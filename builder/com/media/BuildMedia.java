@@ -22,6 +22,7 @@ public class BuildMedia extends BuildWinterwellProject {
 		if (outDir!=null) {
 			mdt.setOutputDirectory(outDir);
 		}
+		mdt.addDependency("commons-fileupload","commons-fileupload","1.4");
 		deps.add(mdt);
 
 		return deps;
