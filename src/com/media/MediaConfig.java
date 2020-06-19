@@ -4,6 +4,7 @@ import java.io.File;
 
 import com.winterwell.es.ESPath;
 import com.winterwell.es.IESRouter;
+import com.winterwell.utils.TodoException;
 import com.winterwell.utils.io.Option;
 import com.winterwell.web.app.ISiteConfig;
 
@@ -25,7 +26,6 @@ public class MediaConfig implements IESRouter, ISiteConfig {
 	
 	@Override
 	public <T> ESPath<T> getPath(CharSequence dataspace, Class<T> type, CharSequence id, Object status) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new TodoException();
 	}
 }
