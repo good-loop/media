@@ -5,7 +5,7 @@
 # Versions of this script are usually run by TeamCity, in response to a git commit.
 # The script uses ssh remote commands to target a server -- it does not affect the local machine.
 # For testing, the script can also be run from your local computer.
-#Version 1.3.8
+#Version 1.3.9
 # Latest Change -- Adding new dependency checks -- Attempting to create parity with production publisher template script
 
 #####  GENERAL SETTINGS
@@ -153,11 +153,11 @@ function check_for_wwappbasejs_location {
     fi
 }
 
-# Dependency Check Function - bobwarehouse directory has discrete 'code' repository nested inside of it. - This Function's Version is 1.00
+# Dependency Check Function - bobwarehouse directory has discrete 'code' repository nested inside of it. - This Function's Version is 1.01
 function check_for_code_repo_in_bobwarehouse {
     if [[ $PROJECT_USES_BOB = 'yes' ]]; then
         for server in ${TARGET_SERVERS[@]}; do
-            if ssh winterwell@$server '[ ! -d $BOBWAREHOUSE_PATH/code ]'; then
+            if ssh winterwell@$server "[ ! -d $BOBWAREHOUSE_PATH/code ]"; then
                 printf "\n\nNo 'code' repo found in $BOBWAREHOUSE_PATH on $server.  Cloning now ...\n"
                 ssh winterwell@$server "cd $BOBWAREHOUSE_PATH && git clone git@git.winterwell.com:/winterwell-code code"
                 printf "\nContinuing without verifying successful cloning of the winterwell-code repo...\n"
