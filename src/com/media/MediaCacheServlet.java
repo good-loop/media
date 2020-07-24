@@ -128,6 +128,16 @@ public class MediaCacheServlet implements IServlet {
 			waitFor.unlock();
 		}
 		
+		// HACK (maybe permanent) - the file should exist and be in the correct location now, but
+		// we're still getting errors on first serve. Wait 0.1s in case there's a filesystem/nginx
+		// latency issue causing the file to not be available right away.
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		// Redirect the caller to the same place they originally tried - which will now be a file hit
 		// Remove the query string so it's not a circular redirect
 		URL redirectUrl = new URL(reqUrl.getProtocol(), reqUrl.getHost(), reqUrl.getPort(), reqUrl.getPath());
