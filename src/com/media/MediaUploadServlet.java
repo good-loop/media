@@ -281,7 +281,7 @@ public class MediaUploadServlet implements IServlet {
 
 		if (conf.uploadDir!=null) {
 			this.setUploadDir(conf.uploadDir);
-			this.setWebRoot(new File("web"));		
+			this.setWebRoot(new File("web"));
 			KServerType serverType = AppUtils.getServerType(state);
 			Log.d(AppUtils.getServerUrl(serverType, "media.good-loop.com").toString());
 			this.setServer(AppUtils.getServerUrl(serverType, "media.good-loop.com").toString());
@@ -290,7 +290,7 @@ public class MediaUploadServlet implements IServlet {
 		// must be logged in
 		state.processMultipartIncoming(new ArrayMap());
 		YouAgainClient ya = Dep.get(YouAgainClient.class);
-		List<AuthToken> tokens = ya.getAuthTokens(state);		
+		List<AuthToken> tokens = ya.getAuthTokens(state);
 		if (state.getUser() == null) throw new NoAuthException(state);
 		if (ServletFileUpload.isMultipartContent(state.getRequest())) {
 	//		try {
