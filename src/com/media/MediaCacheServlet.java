@@ -16,6 +16,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.http.HttpServletResponse;
+
 import com.winterwell.utils.FailureException;
 import com.winterwell.utils.Proc;
 import com.winterwell.utils.io.FileUtils;
@@ -93,6 +95,7 @@ public class MediaCacheServlet implements IServlet {
 		String origUrl = new String(decoder.decode(origUrlEncoded));
 		
 		// Don't let other threads try and cache the same file if rapid-fire requests come in!
+		File toServe = null;
 		if (!inProgress.containsKey(origUrl)) {
 			Lock running = new ReentrantLock();
 			inProgress.put(origUrl, running);
@@ -164,7 +167,26 @@ public class MediaCacheServlet implements IServlet {
 				
 		// Fetch the file. Could reuse the connection we used to check size but FakeBrowser skips a LOT of boilerplate
 		FakeBrowser fb = new FakeBrowser();
-		File tmpFile = fb.getFile(source.toString());
+		
+		// FakeBrowser doesn't automatically traverse 30x redirects
+		File tmpFile = null;
+		String src = source.toString();
+		boolean done = false;
+		while (!done) {
+			try {
+				tmpFile = fb.getFile(src);
+				done = true;
+			} catch (WebEx.Redirect ex) {
+				if (src.equals(ex.to)) {
+					throw new WebEx.E508Loop("Redirect loop detected while processing " + source.toString(), ex);
+				}
+				src = ex.to;
+			}
+		}
+		
+		if (tmpFile == null) {
+			throw new WebEx.E404(source.toString(), "Couldn't fetch original file to cache");
+		}
 		
 		// Move the file to the location it was originally requested from, so future calls will be a file hit
 		FileUtils.move(tmpFile, target);
