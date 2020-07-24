@@ -167,26 +167,7 @@ public class MediaCacheServlet implements IServlet {
 				
 		// Fetch the file. Could reuse the connection we used to check size but FakeBrowser skips a LOT of boilerplate
 		FakeBrowser fb = new FakeBrowser();
-		
-		// FakeBrowser doesn't automatically traverse 30x redirects
-		File tmpFile = null;
-		String src = source.toString();
-		boolean done = false;
-		while (!done) {
-			try {
-				tmpFile = fb.getFile(src);
-				done = true;
-			} catch (WebEx.Redirect ex) {
-				if (src.equals(ex.to)) {
-					throw new WebEx.E508Loop("Redirect loop detected while processing " + source.toString(), ex);
-				}
-				src = ex.to;
-			}
-		}
-		
-		if (tmpFile == null) {
-			throw new WebEx.E404(source.toString(), "Couldn't fetch original file to cache");
-		}
+		File tmpFile = fb.getFile(source.toString());
 		
 		// Move the file to the location it was originally requested from, so future calls will be a file hit
 		FileUtils.move(tmpFile, target);
