@@ -200,11 +200,12 @@ public class MediaCacheServlet implements IServlet {
 	 * Check if the request path implies the image should be resized, and resize as requested.
 	 * @param path The local path the image was requested at (eg "/uploads/mediacache/scaled/w/720/xxxxx.png")
 	 * @param original The raw image to be scaled
+	 * @throws Exception 
 	 */
-	private void maybeResize(String path, File original) {
+	private void maybeResize(String path, File original) throws Exception {
 		// Is the request path a well-formed "scale to width/height X" directory?
 		Matcher resizePathMatcher = resizePathPattern.matcher(path);
-		if (!resizePathMatcher.find()) return;
+		if (!resizePathMatcher.find()) return; // No, it's not. No resizing needed.
 		
 		// "w" or "h"
 		String scaleType = resizePathMatcher.group(1);
@@ -242,6 +243,11 @@ public class MediaCacheServlet implements IServlet {
 				// Requested size is larger? Symlink the original instead of upscaling needlessly
 				symlink(outFile, original);
 			} 
-		} catch (Exception e) {} // Malformed directory? Ignore it.
+		} catch (Exception e) {
+			// Possible exceptions:
+			// - InterruptedException from Proc.waitFor()
+			// - What else?
+			throw e;
+		}
 	}
 }
