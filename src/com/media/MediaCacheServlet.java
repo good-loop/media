@@ -124,7 +124,12 @@ public class MediaCacheServlet implements IServlet {
 			}
 			
 			// Does the path contain an implicit resize request?
-			maybeResize(path, rawCopy);
+			try {
+				maybeResize(path, rawCopy);
+			} catch (Exception e) {
+				throw new WebEx.E50X(e);
+			}
+			
 
 
 			// Tell any other threads looking for this file that it's ready
