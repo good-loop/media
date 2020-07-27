@@ -21,6 +21,8 @@ import javax.servlet.http.HttpServletResponse;
 import com.winterwell.utils.FailureException;
 import com.winterwell.utils.Proc;
 import com.winterwell.utils.io.FileUtils;
+import com.winterwell.utils.log.Log;
+import com.winterwell.utils.time.Time;
 import com.winterwell.utils.web.WebUtils2;
 import com.winterwell.web.FakeBrowser;
 import com.winterwell.web.WebEx;
@@ -125,7 +127,9 @@ public class MediaCacheServlet implements IServlet {
 			
 			// Does the path contain an implicit resize request?
 			try {
+				Log.d("MediaCacheServlet", "About to try resizing at " + new Time().format("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
 				maybeResize(path, rawCopy);
+				Log.d("MediaCacheServlet", "maybeResize returned at" + new Time().format("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
 			} catch (Exception e) {
 				throw new WebEx.E50X(e);
 			}
@@ -154,6 +158,7 @@ public class MediaCacheServlet implements IServlet {
 		
 		// Redirect the caller to the same place they originally tried - which will now be a file hit
 		// Remove the query string so it's not a circular redirect
+		Log.d("MediaCacheServlet", "Issuing redirect at " + new Time().format("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
 		URL redirectUrl = new URL(reqUrl.getProtocol(), reqUrl.getHost(), reqUrl.getPort(), reqUrl.getPath());
 		state.setRedirect(redirectUrl.toString());
 		state.sendRedirect();
