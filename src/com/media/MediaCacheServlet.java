@@ -89,6 +89,12 @@ public class MediaCacheServlet implements IServlet {
 			throw new WebEx.E403("We don't cache this file type: " + extension);
 		}
 		
+		// ...some safety checks on the path against hackers (should we whitelist allowed characters with a regex instead??)
+		String path = state.getRequestPath();
+		if (path.contains("..") || path.contains(";") || path.contains("\n") || path.contains("\r")) {
+			throw new WebEx.E403(reqUrl.toString(), "Blocked unsafe characters");
+		}
+		
 		// Strip off trailing extension to get the encoded URL and decode it
 		// TODO Remove ".gl-size-xxx" wart
 		String origUrlEncoded = filename.replaceAll("\\..*$", "");
@@ -118,7 +124,7 @@ public class MediaCacheServlet implements IServlet {
 			}
 			
 			// Does the path contain an implicit resize request?
-			maybeResize(state.getRequestPath(), rawCopy);
+			maybeResize(path, rawCopy);
 
 
 			// Tell any other threads looking for this file that it's ready
@@ -220,7 +226,7 @@ public class MediaCacheServlet implements IServlet {
 				} catch (Exception e) {}	
 			}
 
-			// Ensure the output dir exists
+			// Ensure the output dir exists			
 			File outDir = new File(cacheRoot, path).getParentFile();
 			if (!outDir.exists()) outDir.mkdirs();
 			File outFile = new File(outDir, original.getName());
