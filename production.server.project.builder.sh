@@ -96,6 +96,7 @@ function git_change_branch {
     cd $1 && git gc --prune=now
     cd $1 && git pull origin $BRANCH_NAME
     cd $1 && git reset --hard FETCH_HEAD
+    cd $1 && git pull
 }
 
 
