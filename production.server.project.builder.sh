@@ -347,6 +347,20 @@ function start_service {
     fi
 }
 
+################
+### ESOTERIC TO THE PRODUCTION MEDIA CLUSTER
+### in order to preserve all of the uploaded media, the jars are built into /home/winterwell/media/build-lib
+### and then they are copied to /home/winterwell/media.good-loop.com/lib  and then the mediaserver service is restarted
+################
+function remove_old_jars {
+    rm /home/winterwell/media.good-loop.com/lib/*.jar
+}
+
+
+function copy_fresh_jars {
+    cp $PROJECT_ROOT_ON_SERVER/build-lib/*.jar /home/winterwell/media.good-loop.com/lib/
+}
+
 
 ################
 ### Interactive Portion -- Have the Human User type in the name of the git branch that
@@ -404,4 +418,6 @@ use_bob
 use_npm
 use_webpack
 use_jerbil
+remove_old_jars
+copy_fresh_jars
 start_service
