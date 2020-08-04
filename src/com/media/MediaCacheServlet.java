@@ -27,6 +27,7 @@ import com.winterwell.utils.web.WebUtils2;
 import com.winterwell.web.FakeBrowser;
 import com.winterwell.web.WebEx;
 import com.winterwell.web.WebInputException;
+import com.winterwell.web.app.FileServlet;
 import com.winterwell.web.app.IServlet;
 import com.winterwell.web.app.WebRequest;
 
@@ -102,40 +103,37 @@ public class MediaCacheServlet implements IServlet {
 		String origUrlEncoded = filename.replaceAll("\\..*$", "");
 		String origUrl = new String(decoder.decode(origUrlEncoded));
 		
+		// Once we have the file, we'll hand off to FileServlet - so keep tabs on its location outside the fetch/wait block
+		File toServe = new File(cacheRoot.getAbsolutePath(), filename);
+		
 		// Don't let other threads try and cache the same file if rapid-fire requests come in!
-		File toServe = null;
 		if (!inProgress.containsKey(origUrl)) {
 			Lock running = new ReentrantLock();
 			inProgress.put(origUrl, running);
 			running.lock();
 			
 			// Could be we already downloaded the base version and this is a resize request - skip downloading if so.
-			File rawCopy = new File(cacheRoot.getAbsolutePath(), filename);
-			if (!rawCopy.exists()) {
+			if (!toServe.exists()) {
 				// Handle on where we want the raw copy of the file to be...
-				rawCopy = FileUtils.getNewFile(new File(cacheRoot.getAbsolutePath(), filename));
+				toServe = FileUtils.getNewFile(new File(cacheRoot.getAbsolutePath(), filename));
 				
 				URL origUrlObj = new URL(origUrl);
 				if (origUrlObj.getHost().equals(reqUrl.getHost()) && origUrlObj.getPath().startsWith("/uploads")) {
 					// If the file is on this uploads server, create a symlink to it in the requested location.
-					symlink(rawCopy, new File(webRoot, origUrlObj.getPath()));
+					symlink(toServe, new File(webRoot, origUrlObj.getPath()));
 				} else {
 					// If it's on another host, fetch and save it.
-					fetch(origUrlObj, rawCopy);
+					fetch(origUrlObj, toServe);
 				}
 			}
 			
 			// Does the path contain an implicit resize request?
 			try {
-				Log.d("MediaCacheServlet", "About to try resizing at " + new Time().format("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
-				maybeResize(path, rawCopy);
-				Log.d("MediaCacheServlet", "maybeResize returned at" + new Time().format("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
+				toServe = maybeResize(path, toServe);
 			} catch (Exception e) {
 				throw new WebEx.E50X(e);
 			}
 			
-
-
 			// Tell any other threads looking for this file that it's ready
 			running.unlock();
 			inProgress.remove(origUrl);
@@ -146,22 +144,7 @@ public class MediaCacheServlet implements IServlet {
 			waitFor.unlock();
 		}
 		
-		// HACK (maybe permanent) - the file should exist and be in the correct location now, but
-		// we're still getting errors on first serve. Wait 0.1s in case there's a filesystem/nginx
-		// latency issue causing the file to not be available right away.
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		// Redirect the caller to the same place they originally tried - which will now be a file hit
-		// Remove the query string so it's not a circular redirect
-		Log.d("MediaCacheServlet", "Issuing redirect at " + new Time().format("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
-		URL redirectUrl = new URL(reqUrl.getProtocol(), reqUrl.getHost(), reqUrl.getPort(), reqUrl.getPath());
-		state.setRedirect(redirectUrl.toString());
-		state.sendRedirect();
+		FileServlet.serveFile(toServe, state);
 	}
 	
 	
@@ -212,10 +195,10 @@ public class MediaCacheServlet implements IServlet {
 	 * @param original The raw image to be scaled
 	 * @throws Exception 
 	 */
-	private void maybeResize(String path, File original) throws Exception {
+	private File maybeResize(String path, File original) throws Exception {
 		// Is the request path a well-formed "scale to width/height X" directory?
 		Matcher resizePathMatcher = resizePathPattern.matcher(path);
-		if (!resizePathMatcher.find()) return; // No, it's not. No resizing needed.
+		if (!resizePathMatcher.find()) return original; // No, it's not. No resizing needed.
 		
 		// "w" or "h"
 		String scaleType = resizePathMatcher.group(1);
@@ -253,6 +236,9 @@ public class MediaCacheServlet implements IServlet {
 				// Requested size is larger? Symlink the original instead of upscaling needlessly
 				symlink(outFile, original);
 			} 
+			
+			// We'll be serving this newly-created file (or symlink), so return it.
+			return outFile;
 		} catch (Exception e) {
 			// Possible exceptions:
 			// - InterruptedException from Proc.waitFor()
