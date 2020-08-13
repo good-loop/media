@@ -15,6 +15,14 @@ import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
 
+/**
+ * TODO @Roscoe - could you document the directory structure this uses? Thanks
+ * TODO Could you document the non-Java dependencies e.g. imagemagick? Thanks
+ * TODO @Roscoe - Could you add a unit test for this? Thanks.
+ * 
+ * @author Roscoe
+ *
+ */
 public class FileProcessor {
 	// TODO: Would it be worth selecting quality reduction based on some maximum size?
 	// i.e always want mobile images below 300kB, so reduce image to get as close as possible without creating a grainy mess
