@@ -16,8 +16,9 @@ import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
 
 /**
- * TODO @Roscoe - could you document the directory structure this uses? Thanks
- * TODO Could you document the non-Java dependencies e.g. imagemagick? Thanks
+ * See {@link MediaCacheServlet} for info on the directory structure this uses
+ * and the non-Java dependencies e.g. imagemagick.
+ * 
  * TODO @Roscoe - Could you add a unit test for this? Thanks.
  * 
  * @author Roscoe
