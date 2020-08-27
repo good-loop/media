@@ -34,6 +34,7 @@ import com.winterwell.web.FileTooLargeException;
 import com.winterwell.web.WebInputException;
 import com.winterwell.web.ajax.JsonResponse;
 import com.winterwell.web.app.AppUtils;
+import com.winterwell.web.app.FileServlet;
 import com.winterwell.web.app.IServlet;
 import com.winterwell.web.app.KServerType;
 import com.winterwell.web.app.UploadServlet;
@@ -275,7 +276,7 @@ public class MediaUploadServlet implements IServlet {
 	}
 	
 	@Override
-	public void process(WebRequest state) throws IOException {
+	public void process(WebRequest state) throws Exception {		
 		// ...upload size
 		MediaConfig conf = Dep.get(MediaConfig.class);
 
@@ -285,6 +286,15 @@ public class MediaUploadServlet implements IServlet {
 			KServerType serverType = AppUtils.getServerType(state);
 			Log.d(AppUtils.getServerUrl(serverType, "media.good-loop.com").toString());
 			this.setServer(AppUtils.getServerUrl(serverType, "media.good-loop.com").toString());
+		}
+		
+		// Nginx setup bug seen August 2020 - an uploaded file existed, but was not being served 
+		// see: https://media.good-loop.com/uploads/captured/rendered.y3c1kLph.mp4 
+		// So handle a get here
+		if (state.isGET()) {
+			FileServlet fs = new FileServlet(webRoot);			
+			fs.process(state);
+			return;
 		}
 		
 		// must be logged in
@@ -299,7 +309,7 @@ public class MediaUploadServlet implements IServlet {
 			
 			WebUtils2.CORS(state, true);
 			
-			// redirect?? use-case??
+			// redirect?
 			if (state.sendRedirect()) {
 				return;
 			}
@@ -311,6 +321,6 @@ public class MediaUploadServlet implements IServlet {
 	//		} catch(FileTooLargeException ex) {
 			// Let the standard code handle it
 		}
-		throw new TodoException(state);
+		throw new TodoException(state.getRequest().getMethod()+" request to media-upload, but no multipart form payload was sent "+state);
 	}
 }
