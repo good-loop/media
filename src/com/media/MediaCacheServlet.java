@@ -87,7 +87,7 @@ public class MediaCacheServlet implements IServlet {
 		String filename = reqUrl.getPath().replaceAll("^.*\\/", "");
 		
 		// Is someone trying to cache something they shouldn't?
-		String extension = filename.substring(filename.lastIndexOf('.'));
+		String extension = filename.substring(filename.lastIndexOf('.')).toLowerCase();
 		if (!acceptExtensions.contains(extension)) {
 			throw new WebEx.E403("We don't cache this file type: " + extension);
 		}
