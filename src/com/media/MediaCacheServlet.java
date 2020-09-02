@@ -171,7 +171,17 @@ public class MediaCacheServlet implements IServlet {
 		// Move the file to the location it was originally requested from, so future calls will be a file hit
 		FileUtils.move(tmpFile, target);
 		// ...and strip metadata
-		Proc.run("exiftool -all= " + target.getAbsolutePath());
+		try {
+			Proc.run("exiftool -all= " + target.getAbsolutePath());	
+		} catch (Exception e) {
+			if (e.getMessage().contains("Cannot run program")) {
+				// Missing exiftool? Log and continue (exif stripping isn't a critical function)
+				Log.e("This server does not have exiftool installed, which is necessary for optimal functioning of MediaCacheServlet.", e);
+			} else {
+				// Any other error? Escalate
+				throw e;
+			}
+		}
 	}
 	
 	
@@ -212,12 +222,20 @@ public class MediaCacheServlet implements IServlet {
 			// Also - don't try to resize SVGs. The browser is much better at it than you.
 			boolean doResize = !original.getName().endsWith(".svg");
 			if (doResize) {
-				Matcher sizeMatcher = imgSizePattern.matcher(Proc.run("exiftool " + inPath));
-				// Should always work - but if exiftool output doesn't match regex or current size doesn't parse, resize anyway.
+				// Failure modes:
+				// - exiftool not installed: log and continue
+				// - exiftool output doesn't match regex: log and continue
 				try {
+					Matcher sizeMatcher = imgSizePattern.matcher(Proc.run("exiftool " + inPath));
 					int currentSize = Integer.parseInt(sizeMatcher.group("w".equals(scaleType) ? 1 : 2));
 					if (currentSize < targetSize) doResize = false;
-				} catch (Exception e) {}	
+				} catch (Exception e) {
+					if (e.getMessage().contains("Cannot run program")) {
+						Log.e("This server does not have exiftool installed, which is necessary for optimal functioning of MediaCacheServlet.", e);
+					} else if (e instanceof IllegalStateException || e instanceof IndexOutOfBoundsException) {
+						Log.e("Tried to extract image dimensions using exiftool, but output does not match the expected form.", e);
+					}
+				}
 			}
 
 			// Ensure the output dir exists			
