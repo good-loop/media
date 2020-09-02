@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.io.FilenameUtils;
 
 import com.media.data.MediaObject;
 import com.media.data.MediaObject;
@@ -248,13 +249,15 @@ public class MediaUploadServlet implements IServlet {
 	 * @param tempFile
 	 * @return suggested dest file
 	 */
-	public File getDestFile(String type, File tempFile) {
-		File destDir = new File(uploadsDir, type);
+	public File getDestFile(String subDir, File tempFile) {
+		// Minor hack: Normalise M4V to MP4, to conform to the VAST spec for video formats
+		String destName = tempFile.getName().replaceAll("\\.m4v$", ".mp4");
+		File destDir = new File(uploadsDir, subDir);
 		if ( ! destDir.exists()) {
 			boolean ok = destDir.mkdirs();
 			if ( ! ok) throw new FailureException("Could not create directory "+destDir);
 		}
-		File dest = FileUtils.getNewFile(new File(destDir, tempFile.getName()));
+		File dest = FileUtils.getNewFile(new File(destDir, destName));
 		return dest;
 	}
 	
