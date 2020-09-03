@@ -78,10 +78,6 @@ public class MediaCacheServlet implements IServlet {
 	@Override
 	public void process(WebRequest state) throws IOException {
 		URL reqUrl = new URL(state.getRequestUrl());
-		// Only the adunit (or someone who has taken a few minutes to figure out the cache system) is allowed to cache new files
-		if (!"good-loop-ad-unit".equals(state.get("from"))) {
-			throw new WebEx.E403("You're not allowed to use this service");
-		}
 		
 		// Strip off leading path components to get filename (we'll be storing to this)
 		String filename = reqUrl.getPath().replaceAll("^.*\\/", "");
