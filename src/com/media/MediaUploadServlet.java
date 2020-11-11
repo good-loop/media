@@ -310,7 +310,7 @@ public class MediaUploadServlet implements IServlet {
 			Map cargo = new ArrayMap();			
 			Map<String, MediaObject> asset = doUpload(state, cargo);
 			
-			WebUtils2.CORS(state, true);
+			WebUtils2.CORS(state, true); // forceSet=true
 			
 			// redirect?
 			if (state.sendRedirect()) {
