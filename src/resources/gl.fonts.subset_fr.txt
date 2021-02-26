@@ -1,0 +1,148 @@
+# The unicodes for all characters currently used in Good-Loop fonts' subsets
+000D
+0000
+0020 # single white space
+0021 # exclamation mark
+0022 # double-quotes
+0023 # hash number-sign
+0024 # dollar sign
+0025 # percentage sign
+0026 # Ampersand
+0027 # single-quote
+0028 # left parenthesis
+0029 # right parenthesis
+002A # Asterisk
+002B # Plus sign
+002C # comma
+002D # Hyphen
+002E # Period, Full-Stop
+002F # Forward Slash
+0030 # Zero
+0031 # One
+0032 # Two
+0033 # Three
+0034 # Four
+0035 # Five
+0036 # Six
+0037 # Seven
+0038 # Eight
+0039 # Nine
+003A # Colon
+003B # Semi-Colon
+003D # Equals
+003F # Question mark
+0040 # At-Symbol
+0041 # Uppercase A
+0042 # Uppercase B
+0043 # Uppercase C
+0044 # Uppercase D
+0045 # Uppercase E
+0046 # Uppercase F
+0047 # Uppercase G
+0048 # Uppercase H
+0049 # Uppercase I
+004A # Uppercase J
+004B # Uppercase K
+004C # Uppercase L
+004D # Uppercase M
+004E # Uppercase N
+004F # Uppercase O
+0050 # Uppercase P
+0051 # Uppercase Q
+0052 # Uppercase R
+0053 # Uppercase S
+0054 # Uppercase T
+0055 # Uppercase U
+0056 # Uppercase V
+0057 # Uppercase W
+0058 # Uppercase X
+0059 # Uppercase Y
+005A # Uppercase Z
+005F # Underscore
+0061 # Lowercase a
+0062 # Lowercase b
+0063 # Lowercase c
+0064 # Lowercase d
+0065 # Lowercase e
+0066 # Lowercase f
+0067 # Lowercase g
+0068 # Lowercase h
+0069 # Lowercase i
+006A # Lowercase j
+006B # Lowercase k
+006C # Lowercase l
+006D # Lowercase m
+006E # Lowercase n
+006F # Lowercase o
+0070 # Lowercase p
+0071 # Lowercase q
+0072 # Lowercase r
+0073 # Lowercase s
+0074 # Lowercase t
+0075 # Lowercase u
+0076 # Lowercase v
+0077 # Lowercase w
+0078 # Lowercase x
+0079 # Lowercase y
+007A # Lowercase z
+00A0 #
+00A3 # Pound Sterling Symbol
+00A9 # Copyright Symbol
+00AD # some kind of short minus Symbol
+00AE # Registered Symbol
+00C0 # Uppercase A with grave accent
+00C1 # Uppercase A with acute accent
+00C2 # Uppercase A with circumflex
+00C6 # Uppercase AE
+00C7 # Uppercase C with cedilla
+00C8 # Uppercase E with grave accent
+00C9 # Uppercase E with acute accent
+00CA # Uppercase E with circumflex
+00CB # Uppercase E with umlaut/diaeresis
+00CE # Uppercase I with circumflex
+00CF # Uppercase I with umlaut/diaeresis
+00D4 # Uppercase O with circumflex
+00D9 # Uppercase U with grave accent
+00DB # Uppercase U with circumflex
+00DC # Uppercase U with umlaut/diaeresis
+00E0 # lowercase a with grave accent
+00E1 # lowercase a with acute accent
+00E2 # lowercase a with circumflex
+00E6 # lowercase ae
+00E7 # lowercase c with cedilla
+00E8 # lowercase e with grave accent
+00E9 # lowercase e with acute accent
+00EA # lowercase e with circumflex
+00EB # lowercase e with umlaut/diaeresis
+00EE # lowercase i with circumflex
+00EF # lowercase i with umlaut/diaeresis
+00F4 # lowercase o with circumflex
+00F9 # lowercase u with grave accent
+00FB # lowercase u with circumflex
+00FC # lowercase u with umlaut/diaeresis
+00FF # lowercase y with umlaut/diaeresis
+0152 # Uppercase ligature Oe
+0153 # lowercase ligature Oe
+0178 # Uppercase Y with umlaut/diaeresis
+2000 #
+2001 #
+2002 #
+2003 #
+2004 #
+2005 #
+2006 #
+2007 #
+2008 #
+2009 #
+200A #
+2010 # 
+2011 #
+2012 # Figuredash
+2013 # Endash
+2014 # Emdash
+2026 # Ellipsis
+202F #
+205F #
+20AC # Euro Symbol
+2122 # Trademark Symbol
+25FC # a large filled in square symbol
