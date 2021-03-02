@@ -49,7 +49,7 @@ PROJECT_USES_WWAPPBASE_SYMLINK='no'
 #####
 PROJECT_ROOT_ON_SERVER="/home/winterwell/$PROJECT_NAME"
 WWAPPBASE_REPO_PATH_ON_SERVER_DISK="/home/winterwell/wwappbase.js"
-PROJECT_LOG_FILE="$PROJECT_ROOT_ON_SERVER/logs/$PROJECT_NAME.log"
+PROJECT_LOG_FILE="/home/winterwell/media.good-loop.com/logs/media.log"
 
 ##### UNDENIABLY ESOTERIC SETTINGS
 ## This is the space where your project's settings make it completely non-standard
