@@ -1,0 +1,186 @@
+# The unicodes for all characters currently used in Good-Loop fonts' subsets
+000D
+0000
+0020 # single white space
+0021 # exclamation mark
+0022 # double-quotes
+0023 # hash number-sign
+0024 # dollar sign
+0025 # percentage sign
+0026 # Ampersand
+0027 # single-quote
+0028 # left parenthesis
+0029 # right parenthesis
+002A # Asterisk
+002B # Plus sign
+002C # comma
+002D # Hyphen
+002E # Period, Full-Stop
+002F # Forward Slash
+0030 # Zero
+0031 # One
+0032 # Two
+0033 # Three
+0034 # Four
+0035 # Five
+0036 # Six
+0037 # Seven
+0038 # Eight
+0039 # Nine
+003A # Colon
+003B # Semi-Colon
+003D # Equals
+003F # Question mark
+0040 # At-Symbol
+0041 # Uppercase A
+0042 # Uppercase B
+0043 # Uppercase C
+0044 # Uppercase D
+0045 # Uppercase E
+0046 # Uppercase F
+0047 # Uppercase G
+0048 # Uppercase H
+0049 # Uppercase I
+004A # Uppercase J
+004B # Uppercase K
+004C # Uppercase L
+004D # Uppercase M
+004E # Uppercase N
+004F # Uppercase O
+0050 # Uppercase P
+0051 # Uppercase Q
+0052 # Uppercase R
+0053 # Uppercase S
+0054 # Uppercase T
+0055 # Uppercase U
+0056 # Uppercase V
+0057 # Uppercase W
+0058 # Uppercase X
+0059 # Uppercase Y
+005A # Uppercase Z
+005F # Underscore
+0061 # Lowercase a
+0062 # Lowercase b
+0063 # Lowercase c
+0064 # Lowercase d
+0065 # Lowercase e
+0066 # Lowercase f
+0067 # Lowercase g
+0068 # Lowercase h
+0069 # Lowercase i
+006A # Lowercase j
+006B # Lowercase k
+006C # Lowercase l
+006D # Lowercase m
+006E # Lowercase n
+006F # Lowercase o
+0070 # Lowercase p
+0071 # Lowercase q
+0072 # Lowercase r
+0073 # Lowercase s
+0074 # Lowercase t
+0075 # Lowercase u
+0076 # Lowercase v
+0077 # Lowercase w
+0078 # Lowercase x
+0079 # Lowercase y
+007A # Lowercase z
+00A0 #
+00A3 # Pound Sterling Symbol
+00A9 # Copyright Symbol
+00AD # some kind of short minus Symbol
+00AE # Registered Symbol
+0384 # Greek Tonos
+0385 # Greek Dialytika Tonos
+0386 # Uppercase Greek Alpha with Tonos
+0387 # Greek Ano Teleia
+0388 # Uppercase Greek Epsilon with Tonos
+0389 # Uppercase Greek Eta with Tonos
+038A # Uppercase Greek Iota with Tonos
+038C # Uppercase Greek Omicron with Tonos
+038E # Uppercase Greek Upsilon with Tonos
+038F # Uppercase Greek Omega with Tonos
+0390 # lowercase greek iota with Dialytika and Tonos
+0391 # Uppercase greek alpha
+0392 # Uppercase greek beta
+0393 # Uppercase greek gamma
+0394 # Uppercase greek delta
+0395 # Uppercase greek epsilon
+0396 # Uppercase greek zeta
+0397 # Uppercase greek eta
+0398 # Uppercase greek theta
+0399 # Uppercase greek iota
+039A # Uppercase greek kappa
+039B # Uppercase greek lambda
+039C # Uppercase greek mu
+039D # Uppercase greek nu
+039E # Uppercase greek xi
+039F # Uppercase greek omicron
+03A0 # Uppercase greek pi
+03A1 # Uppercase greek rho
+03A3 # Uppercase greek sigma
+03A4 # Uppercase greek tau
+03A5 # Uppercase greek upsilon
+03A6 # Uppercase greek phi
+03A7 # Uppercase greek chi
+03A8 # Uppercase greek psi
+03A9 # Uppercase greek omega
+03AA # Uppercase greek iota with Dialytika
+03AB # Uppercase greek Upsilon with Dialytika
+03AC # lowercase greek alpha with tonos
+03AD # lowercase greek epsilon with tonos
+03AE # lowercase greek eta with tonos
+03AF # lowercase greek iota with tonos
+03B0 # lowercase greek upsilon with Dialytika and Tonos
+03B1 # lowercase greek alpha
+03B2 # lowercase greek beta
+03B3 # lowercase greek gamma
+03B4 # lowercase greek delta
+03B5 # lowercase greek epsilon
+03B6 # lowercase greek zeta
+03B7 # lowercase greek eta
+03B8 # lowercase greek theta
+03B9 # lowercase greek iota
+03BA # lowercase greek kappa
+03BB # lowercase greek lambda
+03BC # lowercase greek mu
+03BD # lowercase greek nu
+03BE # lowercase greek xi
+03BF # lowercase greek omicron
+03C0 # lowercase greek pi
+03C1 # lowercase greek rho
+03C2 # lowercase greek final sigma
+03C3 # lowercase greek sigma
+03C4 # lowercase greek tau
+03C5 # lowercase greek upsilon
+03C6 # lowercase greek phi
+03C7 # lowercase greek chi
+03C8 # lowercase greek psi
+03C9 # lowercase greek omega
+03CA # lowercase greek iota with Dialytika
+03CB # lowercase greek upsilon with Dialytika
+03CC # lowercase greek omicron with tonos
+03CD # lowercase greek upsilon with tonos
+03CE # lowercase greek omega with tonos
+2000 #
+2001 #
+2002 #
+2003 #
+2004 #
+2005 #
+2006 #
+2007 #
+2008 #
+2009 #
+200A #
+2010 # 
+2011 #
+2012 # Figuredash
+2013 # Endash
+2014 # Emdash
+2026 # Ellipsis
+202F #
+205F #
+20AC # Euro Symbol
+2122 # Trademark Symbol
+25FC # a large filled in square symbol
