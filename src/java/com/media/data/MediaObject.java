@@ -14,6 +14,12 @@ import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.Dt;
 import com.winterwell.utils.time.TUnit;
 
+/**
+ * @deprecated (minor) Replace with VideoObject
+ * 
+ * @author Roscoe
+ *
+ */
 public class MediaObject {
 	public File file;
 	// Will need to be set externally
