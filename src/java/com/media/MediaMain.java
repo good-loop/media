@@ -29,7 +29,7 @@ public class MediaMain extends AMain<MediaConfig> {
 			config.uploadDir = new File("web/uploads");
 		}
 		// YA
-		YouAgainClient yac = new YouAgainClient("good-loop");
+		YouAgainClient yac = new YouAgainClient("good-loop",getAppNameFull());
 		//		DB.init(config); already done
 		Dep.set(YouAgainClient.class, yac);		
 		// Set-up youagain service
