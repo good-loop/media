@@ -1,0 +1,370 @@
+# https://www.unicode.org/charts/PDF/U0400.pdf
+000D
+0000
+0020 # single white space
+0021 # exclamation mark
+0022 # double-quotes
+0023 # hash number-sign
+0024 # dollar sign
+0025 # percentage sign
+0026 # Ampersand
+0027 # single-quote
+0028 # left parenthesis
+0029 # right parenthesis
+002A # Asterisk
+002B # Plus sign
+002C # comma
+002D # Hyphen
+002E # Period, Full-Stop
+002F # Forward Slash
+0030 # Zero
+0031 # One
+0032 # Two
+0033 # Three
+0034 # Four
+0035 # Five
+0036 # Six
+0037 # Seven
+0038 # Eight
+0039 # Nine
+003A # Colon
+003B # Semi-Colon
+003D # Equals
+003F # Question mark
+0040 # At-Symbol
+0041 # Uppercase A
+0042 # Uppercase B
+0043 # Uppercase C
+0044 # Uppercase D
+0045 # Uppercase E
+0046 # Uppercase F
+0047 # Uppercase G
+0048 # Uppercase H
+0049 # Uppercase I
+004A # Uppercase J
+004B # Uppercase K
+004C # Uppercase L
+004D # Uppercase M
+004E # Uppercase N
+004F # Uppercase O
+0050 # Uppercase P
+0051 # Uppercase Q
+0052 # Uppercase R
+0053 # Uppercase S
+0054 # Uppercase T
+0055 # Uppercase U
+0056 # Uppercase V
+0057 # Uppercase W
+0058 # Uppercase X
+0059 # Uppercase Y
+005A # Uppercase Z
+005F # Underscore
+0061 # Lowercase a
+0062 # Lowercase b
+0063 # Lowercase c
+0064 # Lowercase d
+0065 # Lowercase e
+0066 # Lowercase f
+0067 # Lowercase g
+0068 # Lowercase h
+0069 # Lowercase i
+006A # Lowercase j
+006B # Lowercase k
+006C # Lowercase l
+006D # Lowercase m
+006E # Lowercase n
+006F # Lowercase o
+0070 # Lowercase p
+0071 # Lowercase q
+0072 # Lowercase r
+0073 # Lowercase s
+0074 # Lowercase t
+0075 # Lowercase u
+0076 # Lowercase v
+0077 # Lowercase w
+0078 # Lowercase x
+0079 # Lowercase y
+007A # Lowercase z
+00A0 #
+00A3 # Pound Sterling Symbol
+00A9 # Copyright Symbol
+00AD # some kind of short minus Symbol
+00AE # Registered Symbol
+0400 # Uppercase cyrillic IE with grave accent
+0401 # Uppercase cyrillic IO
+0402 # Uppercase cyrillic DJE
+0403 # Uppercase cyrillic GJE
+0404 # Uppercase cyrillic Ukrainian IE
+0405 # Uppercase cyrillic DZE
+0406 # Uppercase cyrillic Byelorussian/Ukrainian I
+0407 # Uppercase cyrillic YI
+0408 # Uppercase cyrillic JE
+0409 # Uppercase cyrillic LJE
+040A # Uppercase cyrillic NJE
+040B # Uppercase cyrillic TSHE
+040C # Uppercase cyrillic KJE
+040D # Uppercase cyrillic I with grave accent
+040E # Uppercase cyrillic short U
+040F # Uppercase cyrillic DZHE
+0410 # Uppercase cyrillic A
+0411 # Uppercase cyrillic BE
+0412 # Uppercase cyrillic VE
+0413 # Uppercase cyrillic GHE
+0414 # Uppercase cyrillic DE
+0415 # Uppercase cyrillic IE
+0416 # Uppercase cyrillic ZHE
+0417 # Uppercase cyrillic ZE
+0418 # Uppercase cyrillic I
+0419 # Uppercase cyrillic short I
+041A # Uppercase cyrillic KA
+041B # Uppercase cyrillic EL
+041C # Uppercase cyrillic EM
+041D # Uppercase cyrillic EN
+041E # Uppercase cyrillic O
+041F # Uppercase cyrillic PE
+0420 # Uppercase cyrillic ER
+0421 # Uppercase cyrillic ES
+0422 # Uppercase cyrillic TE
+0423 # Uppercase cyrillic U
+0424 # Uppercase cyrillic EF
+0425 # Uppercase cyrillic HA
+0426 # Uppercase cyrillic TSE
+0427 # Uppercase cyrillic CHE
+0428 # Uppercase cyrillic SHA
+0429 # Uppercase cyrillic SHCHA
+042A # Uppercase cyrillic Hard Sign
+042B # Uppercase cyrillic YERU
+042C # Uppercase cyrillic Soft Sign
+042D # Uppercase cyrillic E
+042E # Uppercase cyrillic YU
+042F # Uppercase cyrillic YA
+0430 # lowercase cyrillic a
+0431 # lowercase cyrillic be
+0432 # lowercase cyrillic ve
+0433 # lowercase cyrillic ghe
+0434 # lowercase cyrillic de
+0435 # lowercase cyrillic ie
+0436 # lowercase cyrillic zhe
+0437 # lowercase cyrillic ze
+0438 # lowercase cyrillic i
+0439 # lowercase cyrillic short i
+043A # lowercase cyrillic ka
+043B # lowercase cyrillic el
+043C # lowercase cyrillic em
+043D # lowercase cyrillic en
+043E # lowercase cyrillic o
+043F # lowercase cyrillic pe
+0440 # lowercase cyrillic er
+0441 # lowercase cyrillic es
+0442 # lowercase cyrillic te
+0443 # lowercase cyrillic u
+0444 # lowercase cyrillic ef
+0445 # lowercase cyrillic ha
+0446 # lowercase cyrillic tse
+0447 # lowercase cyrillic che
+0448 # lowercase cyrillic sha
+0449 # lowercase cyrillic shcha
+044A # lowercase cyrillic hard sign
+044B # lowercase cyrillic yeru
+044C # lowercase cyrillic soft sign
+044D # lowercase cyrillic e
+044E # lowercase cyrillic yu
+044F # lowercase cyrillic ya
+0450 # lowercase cyrillic ie with grave accent
+0451 # lowercase cyrillic io
+0452 # lowercase cyrillic dje
+0453 # lowercase cyrillic gje
+0454 # lowercase cyrillic Ukrainian ie
+0455 # lowercase cyrillic dze
+0456 # lowercase cyrillic Byelorussian/Ukrainian i
+0457 # lowercase cyrillic yi
+0458 # lowercase cyrillic je
+0459 # lowercase cyrillic lje
+045A # lowercase cyrillic nje
+045B # lowercase cyrillic tshe
+045C # lowercase cyrillic kje
+045D # lowercase cyrillic i with grave accent
+045E # lowercase cyrillic short u
+045F # lowercase cyrillic dzhe
+0460 # Uppercase cyrillic omega
+0461 # lowercase cyrillic omega
+0462 # Uppercase cyrillic yat
+0463 # lowercase cyrillic yat
+0464 # Uppercase cyrillic E iotafied
+0465 # lowercase cyrillic e iotafied
+0466 # Uppercase cyrilic little yus
+0467 # lowercase cyrilic little yus
+0468 # Uppercase cyrilic little yus iotafied
+0469 # lowercase cyrilic little yus iotafied
+046A # Uppercase cyrillic big yus
+046B # lowercase cyrilic big yus
+046C # Uppercase cyrillic big yus iotafied
+046D # lowercase cyrilic big yus iotafied
+046E # Uppercase cyrillic ksi
+046F # lowercase cyrilic ksi
+0470 # Uppercase cyrillic psi
+0471 # lowercase cyrilic psi
+0472 # Uppercase cyrillic fita
+0473 # lowercase cyrillic fita
+0474 # Uppercase cyrillic izhitsa
+0475 # lowercase cyrillic izhitsa
+0476 # Uppercase cyrillic izhitsa with double grave accent
+0477 # lowercase cyrillic izhitsa with double grave accent
+0478 # Uppercase cyrillic uk
+0479 # lowercase cyrillic uk
+047A # Uppercase cyrillic round omega
+047B # lowercase cyrilic round omega
+047C # Uppercase cyrillic omega with titlo
+047D # lowercase cyrillic omega with titlo
+047E # Uppercase cyrillic ot
+047F # lowercase cyrillic ot
+0480 # Uppercase cyrillic koppa
+0481 # lowercase cyrillic koppa
+0482 # cyrillic thousands sign
+0483 # cyrillic combining titlo
+0484 # cyrillic combining palatialization
+0485 # cyrillic combining dasia pneumata
+0486 # cyrillic combining psili pneumata
+0487 # cyrillic combining pokrytie
+0488 # cyrillic combining hundred thousands sign
+0489 # cyrillic combining millions sign
+048A # Uppercase cyrillic short i with tail
+048B # lowercase cyrillic short i with tail
+048C # Uppercase cyrillic semisoft sign
+048D # lowercase cyrillic semisoft sign
+048E # Uppercase cyrillic er with tick
+048F # lowercase cyrillic er with tick
+0490 # Uppercase cyrillic ghe with upturn
+0491 # lowercase cyrillic ghe with upturn
+0492 # Uppercase cyrillic ghe with stroke
+0493 # lowercase cyrillic ghe with stroke
+0494 # Uppercase cyrillic ghe with middle hook
+0495 # lowercase cyrillic ghe with middle hook
+0496 # Uppercase cyrillic zhe with descender
+0497 # lowercase cyrillic zhe with descender
+0498 # Uppercase cyrillic ze with descender
+0499 # lowercase cyrillic ze with descender
+049A # Uppercase cyrillic ka with descender
+049B # lowercase cyrillic ka with descender
+049C # Uppercase cyrillic ka with vertical stroke
+049D # lowercase cyrillic ka with vertical stroke
+049E # Uppercase cyrillic ka with stroke
+049F # lowercase cyrillic ka with stroke
+04A0 # Uppercase cyrillic bashkir ka
+04A1 # lowercase cyrillic bashkir ka
+04A2 # Uppercase cyrillic en with descender
+04A3 # lowercase cyrillic en with descender
+04A4 # Uppercase cyrillic ligature en ghe
+04A5 # lowercase cyrillic ligature en ghe
+04A6 # Uppercase cyrillic pe with middle hook
+04A7 # lowercase cyrillic pi with middle hook
+04A8 # Uppercase cyrillic abkhasian ha
+04A9 # lowercase cyrillic abkhasian ha
+04AA # Uppercase cyrillic es with descender
+04AB # lowercase cyrillic es with descender
+04AC # Uppercase cyrillic te with descender
+04AD # lowercase cyrillic te with descender
+04AE # Uppercase cyrillic straight u
+04AF # lowercase cyrillic straight u
+04B0 # Uppercase cyrillic straight u with stroke
+04B1 # lowercase cyrillic straight u with stroke
+04B2 # Uppercase cyrillic ha with descender
+04B3 # lowercase cyrillic ha with descender
+04B4 # Uppercase cyrillic te tse
+04B5 # lowercase cyrillic te tse
+04B6 # Uppercase cyrillic che with descender
+04B7 # lowercase cyrillic che with descender
+04B8 # Uppercase cyrillic che with vertical stroke
+04B9 # lowercase cyrillic che with vertical stroke
+04BA # Uppercase cyrillic shha
+04BB # lowercase cyrillic shha
+04BC # Uppercase cyrillic abkhasian che
+04BD # lowercase cyrillic abkhasian che
+04BE # Uppercase cyrillic che with descender
+04BF # lowercase cyrillic che with descender
+04C0 # cyrillic palochka
+04C1 # Uppercase cyrillic zhe with breve
+04C2 # lowercase cyrillic zhe with breve
+04C3 # Uppercase cyrillic ka with hook
+04C4 # lowercase cyrillic ka with hook
+04C5 # Uppercase cyrillic el with tail
+04C6 # lowercase cyrillic el with tail
+04C7 # Uppercase cyrillic en with hook
+04C8 # lowercase cyrillic en with hook
+04C9 # Uppercase cyrillic en with tail
+04CA # lowercase cyrillic en with tail
+04CB # Uppercase cyrillic khakassian che
+04CC # lowercase cyrillic khakassian che
+04CD # Uppercase cyrillic em with tail
+04CE # lowercase cyrillic em with tail
+04CF # lowercase cyrillic palochka
+04D0 # Uppercase cyrillic A with breve
+04D1 # lowercase cyrillic a with breve
+04D2 # Uppercase cyrillic a with diaeresis
+04D3 # lowercase cyrillic a with diaeresis
+04D4 # Uppercase cyrillic ligature a ie
+04D5 # lowercase cyrillic ligature a ie
+04D6 # Uppercase cyrillic ie with breve
+04D7 # lowercase cyrillic ie with breve
+04D8 # Uppercase cyrillic schwa
+04D9 # lowercase cyrillic schwa
+04DA # Uppercase cyrillic schwa with diaeresis
+04DB # lowercase cyrillic schwa with diaeresis
+04DC # Uppercase cyrillic zhe with diaeresis
+04DD # lowercase cyrillic zhe with diaeresis
+04DE # Uppercase cyrillic ze with diaeresis
+04DF # lowercase cyrillic ze with diaeresis
+04E0 # Uppercase cyrillic abkhasian dze
+04E1 # lowercase cyrillic abkhasian dze
+04E2 # Uppercase cyrillic I with macron
+04E3 # lowercase cyrillic i with macron
+04E4 # Uppercase cyrillic i with diaeresis
+04E5 # lowercase cyrillic i with diaeresis
+04E6 # Uppercase cyrillic o with diaeresis
+04E7 # lowercase cyrillic o with diaeresis
+04E8 # Uppercase cyrillic barred O
+04E9 # lowercase cyrillic barred O
+04EA # Uppercase cyrillic barred o with diaeresis
+04EB # lowercase cyrillic barred o with diaeresis
+04EC # Uppercase cyrillic E with diaeresis
+04ED # lowercase cyrillic e with diaeresis
+04EE # Uppercase cyrillic u with macron
+04EF # lowercase cyrillic u with macron
+04F0 # Uppercase cyrillic u with diaeresis
+04F1 # lowercase cyrillic u with diaeresis
+04F2 # Uppercase cyrillic u with double acute
+04F3 # lowercase cyrillic u with double acute
+04F4 # Uppercase cyrillic che with diaeresis
+04F5 # lowercase cyrillic che with diaeresis
+04F6 # Uppercase cyrillic ghe with descender
+04F7 # lowercase cyrillic ghe with descender
+04F8 # Uppercase cyrillic yeru with diaeresis
+04F9 # lowercase cyrillic yeru with diaeresis
+04FA # Uppercase cyrillic ghe with stroke and hook
+04FB # lowercase cyrillic ghe with stroke and hook
+04FC # Uppercase cyrillic ha with hook
+04FD # lowercase cyrillic ha with hook
+04FE # Uppercase cyrillic ha with stroke
+04FF # lowercase cyrillic ha with stroke
+2000 #
+2001 #
+2002 #
+2003 #
+2004 #
+2005 #
+2006 #
+2007 #
+2008 #
+2009 #
+200A #
+2010 # 
+2011 #
+2012 # Figuredash
+2013 # Endash
+2014 # Emdash
+2026 # Ellipsis
+202F #
+205F #
+20AC # Euro Symbol
+2122 # Trademark Symbol
+25FC # a large filled in square symbol

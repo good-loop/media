@@ -10,6 +10,7 @@ public class BuildMedia extends BuildWinterwellProject {
 
 	public BuildMedia() {
 		super("media");
+		setVersion("1.0.1"); // 15 Apr 2021
 	}
 
 	@Override

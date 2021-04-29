@@ -90,6 +90,14 @@
 00A9 # Copyright Symbol
 00AD # some kind of short minus Symbol
 00AE # Registered Symbol
+00C4 # Uppercase A with umlaut/diaeresis
+00D6 # Uppercase O with umlaut/diaeresis
+00DC # Uppercase U with umlaut/diaeresis
+00DF # Eszett (lowercase)
+00E4 # lowercase a with umlaut/diaeresis
+00F6 # lowercase o with umlaut/diaeresis
+00FC # lowercase u with umlaut/diaeresis
+1E9E # scharfes (uppercase)
 2000 #
 2001 #
 2002 #
@@ -109,5 +117,6 @@
 2026 # Ellipsis
 202F #
 205F #
+20AC # Euro Symbol
 2122 # Trademark Symbol
 25FC # a large filled in square symbol
