@@ -49,16 +49,16 @@ import com.winterwell.web.app.WebRequest;
  *
  */
 public class MediaCacheServlet implements IServlet {
-	// Pull the numbers out of the "Image Size" line of exiftool's output
-	Pattern imgSizePattern = Pattern.compile("^Image Size[^\\d]*(\\d+)x(\\d+)", Pattern.MULTILINE);
+	/** Pull the numbers out of the "Image Size" line of exiftool's output */
+	static Pattern imgSizePattern = Pattern.compile("^Image Size[^\\d]*(\\d+)x(\\d+)", Pattern.MULTILINE);
 	
-	Pattern resizePathPattern = Pattern.compile("/scaled/([wh])/(\\d+)");
+	static Pattern resizePathPattern = Pattern.compile("/scaled/([wh])/(\\d+)");
 
-	// Track in-progress caching operations so rapid-fire requests don't make a mess
-	Map<String, Lock> inProgress = new HashMap<String, Lock>();
+	/** Track in-progress caching operations so rapid-fire requests don't make a mess */
+	static Map<String, Lock> inProgress = new HashMap<String, Lock>();
 	
-	// Let's not cache EVERYTHING any rando throws at us.
-	private List<String> acceptExtensions = Arrays.asList(".png", ".jpg", ".jpeg", ".gif", ".svg", ".mp4", ".mpeg4", ".m4v", ".webm");
+	/** Let's not cache EVERYTHING any rando throws at us. */
+	private static List<String> acceptExtensions = Arrays.asList(".png", ".jpg", ".jpeg", ".gif", ".svg", ".mp4", ".mpeg4", ".m4v", ".webm");
 	
 	// Don't cache more than 10mb? TODO Think about this for video purposes...
 	private long maxSize = 10000000L;
