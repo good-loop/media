@@ -6,8 +6,7 @@
 ##
 # It's too easy if anything. Meaning; it's too simple, and only allows for three different outputs.
 #
-# TODO:
-## if not enough arguments passed -- print usage and exit
+
 
 ### FFMpeg in-line commands.  Set as variables here at the top of the script, for easy human editing and additions.
 DESKTOP_FFMPEG_ARGS='-ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 750k -maxrate 750k -bufsize 1500k -vf scale=-1:720,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1'
