@@ -99,10 +99,10 @@ public class FileProcessor {
 		String cropCommand = ( cropFactors.stream().anyMatch(v -> v != null) ) 
 							? " --crop " + cropFactors.stream().reduce( "", (out, s) ->  out + (s != null ? (String) s : "0") + ":")
 							: "";
-		
-		String command = "taskset -c 0,1 HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Medium 5 Minutes 480p30' " + "--output " + lowResVideoPath	
+		// Cropping has defaulted to auto-crop again.  Cropping is now explicitly OFF.  2021-06-17 DA
+		String command = "taskset -c 0,1,2,3 HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Medium 5 Minutes 480p30' " + " --rate 23.976 " + " --crop 0:0:0:0 " + "--output " + lowResVideoPath	
 				+ cropCommand
-				+ "; " + "taskset -c 0,1 HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Large 3 Minutes 720p30' " + "--output " + highResVideoPath
+				+ "; " + "taskset -c 0,1,2,3 HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Large 3 Minutes 720p30' " + " --rate 23.976 " + " --crop 0:0:0:0 " + "--output " + highResVideoPath
 				+ cropCommand;
 		List<String> commands = Arrays.asList("/bin/bash", "-c", command);
 		
