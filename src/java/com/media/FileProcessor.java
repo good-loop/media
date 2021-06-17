@@ -88,20 +88,21 @@ public class FileProcessor {
 		String lowResVideoPath = mobileDest.getAbsolutePath();
 		String highResVideoPath = standardDest.getAbsolutePath();
 		
-		List<Object> cropFactors = Arrays.asList(
-				params.get("crop-top"),
-				params.get("crop-bottom"),
-				params.get("crop-left"),
-				params.get("crop-right")
-		);
-		
-		// Add cropping parameters if these have been specified
-		String cropCommand = ( cropFactors.stream().anyMatch(v -> v != null) ) 
-							? " --crop " + cropFactors.stream().reduce( "", (out, s) ->  out + (s != null ? (String) s : "0") + ":")
-							: "";
-		// Cropping has defaulted to auto-crop again.  Cropping is now explicitly OFF.  2021-06-17 DA
-		String command = "taskset -c 0,1,2,3 HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Medium 5 Minutes 480p30' " + " --rate 23.976 " + " --crop 0:0:0:0 " + " --output " + lowResVideoPath	
-				+ "; " + "taskset -c 0,1,2,3 HandBrakeCLI " + "--input " + inputVideoPath + " --preset 'Gmail Large 3 Minutes 720p30' " + " --rate 23.976 " + " --crop 0:0:0:0 " + " --output " + highResVideoPath;
+//		List<Object> cropFactors = Arrays.asList(
+//				params.get("crop-top"),
+//				params.get("crop-bottom"),
+//				params.get("crop-left"),
+//				params.get("crop-right")
+//		);
+//		
+//		// Add cropping parameters if these have been specified
+//		String cropCommand = ( cropFactors.stream().anyMatch(v -> v != null) ) 
+//							? " --crop " + cropFactors.stream().reduce( "", (out, s) ->  out + (s != null ? (String) s : "0") + ":")
+//							: "";
+		// Cropping is now explicitly OFF.  2021-06-17 DA
+		// Switching from HandBrake-CLI to ffmpeg -- HandBrake-CLI no longer is up-to-date on ubuntu 18.04
+		String command = "taskset -c 0,1,2,3 ffmpeg " + "-i " + inputVideoPath + " -ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 500k -maxrate 500k -bufsize 1000k -vf scale=720:480,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1 " + lowResVideoPath	
+				+ "; " + "taskset -c 0,1,2,3 ffmpeg " + "-i " + inputVideoPath + " -ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 750k -maxrate 750k -bufsize 1500k -vf scale=1280:720,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1 " + highResVideoPath;
 		List<String> commands = Arrays.asList("/bin/bash", "-c", command);
 		
 		return new FileProcessor(rawDest, standardDest, mobileDest, commands);
