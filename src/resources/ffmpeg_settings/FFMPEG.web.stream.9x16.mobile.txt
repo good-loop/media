@@ -1,0 +1,1 @@
+-ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 500k -maxrate 500k -bufsize 1000k -vf scale=480:720,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1
