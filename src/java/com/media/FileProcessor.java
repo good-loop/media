@@ -69,7 +69,7 @@ public class FileProcessor {
 					// Change image mode to indexed (lossy but preserves alpha)
 					+ "/usr/local/bin/pngquant -s1 --strip --verbose --skip-if-larger --force  --ext .png " + standardImagePath + "; "
 					// Optimise compression as much as possible
-					+ "/usr/bin/optipng " + standardImagePath + "; "
+					+ "/usr/bin/zopflipng -y -m" + standardImagePath + " " + standardImagePath + "; "
 					// Copy result to mobile directory
 					+ "cp " +  standardImagePath + " " + lowResImagePath;
 		} else {
