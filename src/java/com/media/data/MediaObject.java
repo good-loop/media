@@ -15,7 +15,7 @@ import com.winterwell.utils.time.Dt;
 import com.winterwell.utils.time.TUnit;
 
 /**
- * @deprecated (minor) Replace with VideoObject
+ * @deprecated (minor) Refactor to have MediaObject with ImageObject and VideoObject
  * 
  * @author Roscoe
  *
