@@ -9,12 +9,11 @@
 
 
 ### FFMpeg in-line commands.  Set as variables here at the top of the script, for easy human editing and additions.
-DESKTOP_FFMPEG_ARGS='-ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 750k -maxrate 750k -bufsize 1500k -vf scale=-1:720,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1'
-MOBILE_FFMPEG_ARGS='-ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 500k -maxrate 500k -bufsize 1000k -vf scale=-2:480,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1'
-PORTRAIT_FFMPEG_ARGS='-ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 500k -maxrate 500k -bufsize 1000k -vf scale=-2:720,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1'
+DESKTOP_FFMPEG_ARGS='-ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 750k -maxrate 750k -bufsize 1500k -vf scale=720:720:force_original_aspect_ratio=increase:force_divisible_by=2,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1'
+MOBILE_FFMPEG_ARGS='-ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 500k -maxrate 500k -bufsize 1000k -vf scale=480:480:force_original_aspect_ratio=increase:force_divisible_by=2,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1'
 
 function print_usage {
-    printf "\nUSAGE:\n\t./easy-video-processor.sh -i [input_file] -t [desktop|mobile|portrait] -o [output_destination_and_filename]\n"
+    printf "\nUSAGE:\n\t./easy-video-processor.sh -i [input_file] -t [desktop|mobile] -o [output_destination_and_filename]\n"
     exit 0
 }
 
@@ -86,9 +85,6 @@ while getopts "hi:t:o:" opt; do
                 ;;
                 mobile|MOBILE)
                     FFMPEG_ARGS=$MOBILE_FFMPEG_ARGS
-                ;;
-                portrait|PORTRAIT)
-                    FFMPEG_ARGS=$PORTRAIT_FFMPEG_ARGS
                 ;;
                 *)
                     EXIT_STATUS='5'
