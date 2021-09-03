@@ -105,6 +105,7 @@
 00D6 # Uppercase O with umlaut/diaeresis
 00D8 # Uppercase O with strok through it
 00DA # Uppercase U with acute accent
+00DC # Uppercase U with diaeresis
 00DD # Uppercase Y with acute accent
 00E1 # lowercase a with acute accent
 00E2 # lowercase a with circumflex
@@ -122,6 +123,7 @@
 00F6 # lowercase o with umlaut/diaeresis
 00F8 # lowercase o with stroke through it
 00FA # lowercase u with acute accent
+00FC # lowercase u with diaeresis
 00FD # lowercase y with acute accent
 0100 # Uppercase A with macron
 0101 # lowercase a with macron
