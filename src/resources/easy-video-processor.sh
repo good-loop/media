@@ -2,15 +2,15 @@
 
 ##
 # Easy Video Processor
-## VERSION 1.0.0
+## VERSION 1.0.2
 ##
-# It's too easy if anything. Meaning; it's too simple, and only allows for three different outputs.
+# It's too easy if anything. Meaning; it's too simple, and only allows for two different outputs.
 #
 
 
 ### FFMpeg in-line commands.  Set as variables here at the top of the script, for easy human editing and additions.
-DESKTOP_FFMPEG_ARGS='-ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 750k -maxrate 750k -bufsize 1500k -vf scale=720:720:force_original_aspect_ratio=increase:force_divisible_by=2,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1'
-MOBILE_FFMPEG_ARGS='-ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 500k -maxrate 500k -bufsize 1000k -vf scale=480:480:force_original_aspect_ratio=increase:force_divisible_by=2,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1'
+DESKTOP_FFMPEG_ARGS='-ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 750k -maxrate 750k -bufsize 1500k -pix_fmt yuv420p -vf colorspace=bt709:iall=bt601-6-625:fast=1,scale=720:720:force_original_aspect_ratio=increase:force_divisible_by=2,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1'
+MOBILE_FFMPEG_ARGS='-ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 500k -maxrate 500k -bufsize 1000k -pix_fmt yuv420p -vf -vf colorspace=bt709:iall=bt601-6-625:fast=1,scale=480:480:force_original_aspect_ratio=increase:force_divisible_by=2,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1'
 
 function print_usage {
     printf "\nUSAGE:\n\t./easy-video-processor.sh -i [input_file] -t [desktop|mobile] -o [output_destination_and_filename]\n"
