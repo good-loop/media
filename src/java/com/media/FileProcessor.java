@@ -67,11 +67,11 @@ public class FileProcessor {
 			// optipng will iterate through different png compression methods and keep the result with smallest file size
 			command = "cp " + inputImagePath + " " + standardImagePath + "; "
 					// Change image mode to indexed (lossy but preserves alpha)
-					+ "/usr/local/bin/pngquant -s1 --strip --verbose --skip-if-larger --force  --ext .png " + standardImagePath + "; "
+					+ "/usr/local/bin/pngquant -s1 --strip --verbose --skip-if-larger --force --ext .png " + standardImagePath + "; "
 					// Optimise compression as much as possible
 					+ "/usr/bin/zopflipng -y -m" + standardImagePath + " " + standardImagePath + "; "
 					// Copy result to mobile directory
-					+ "cp " +  standardImagePath + " " + lowResImagePath;
+					+ "cp " + standardImagePath + " " + lowResImagePath;
 		} else {
 			command = "/usr/bin/convert " + inputImagePath + " -quality " + STANDARD_RES_QUALITY + " " + standardImagePath
 					+ (JPEGOPTIM_SUPPORTED_TYPES.contains(fileType) ? "&& /usr/bin/jpegoptim " + standardImagePath : "")
@@ -97,12 +97,16 @@ public class FileProcessor {
 //		
 //		// Add cropping parameters if these have been specified
 //		String cropCommand = ( cropFactors.stream().anyMatch(v -> v != null) ) 
-//							? " --crop " + cropFactors.stream().reduce( "", (out, s) ->  out + (s != null ? (String) s : "0") + ":")
+//							? " --crop " + cropFactors.stream().reduce( "", (out, s) -> out + (s != null ? (String) s : "0") + ":")
 //							: "";
-		// Cropping is now explicitly OFF.  2021-06-17 DA
+		// Cropping is now explicitly OFF. 2021-06-17 DA
 		// Switching from HandBrake-CLI to ffmpeg -- HandBrake-CLI no longer is up-to-date on ubuntu 18.04
-		String command = "taskset -c 0,1,2,3 ffmpeg " + "-i " + inputVideoPath + " -ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 500k -maxrate 500k -bufsize 1000k -vf scale=720:480,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1 " + lowResVideoPath	
-				+ "; " + "taskset -c 0,1,2,3 ffmpeg " + "-i " + inputVideoPath + " -ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 750k -maxrate 750k -bufsize 1500k -vf scale=1280:720,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1 " + highResVideoPath;
+		// Changing scale from e.g. 1280:720 to 720:720:force_original_aspect_ratio=increase:force_divisible_by=2
+		// Meaning - start by assuming we'll scale to a 720x720 box, but increase whichever dimension is necessary
+		// to maintain original aspect ratio, and round resultant size to a multiple of 2 to satisfy the encoder.
+		// This allows the same command to handle 4:3, 16:9, portrait, and various non-standard aspect ratios. --RM August 2021
+		String command = "taskset -c 0,1,2,3 ffmpeg -i " + inputVideoPath + " -ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 500k -maxrate 500k -bufsize 1000k -vf scale=480:480:force_original_aspect_ratio=increase:force_divisible_by=2,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1 " + lowResVideoPath
+				+ "; taskset -c 0,1,2,3 ffmpeg -i " + inputVideoPath + " -ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 750k -maxrate 750k -bufsize 1500k -vf scale=720:720:force_original_aspect_ratio=increase:force_divisible_by=2,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1 " + highResVideoPath;
 		List<String> commands = Arrays.asList("/bin/bash", "-c", command);
 		
 		return new FileProcessor(rawDest, standardDest, mobileDest, commands);
