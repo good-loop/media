@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.winterwell.utils.FailureException;
 import com.winterwell.utils.Proc;
+import com.winterwell.utils.Utils;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.Time;
@@ -30,6 +31,7 @@ import com.winterwell.web.WebInputException;
 import com.winterwell.web.app.FileServlet;
 import com.winterwell.web.app.IServlet;
 import com.winterwell.web.app.WebRequest;
+import com.winterwell.web.fields.StringField;
 
 /**
  * Hit /mediacache/[complete URL encoded as base64url + filetype] and if the request
@@ -59,7 +61,9 @@ public class MediaCacheServlet implements IServlet {
 	
 	/** Let's not cache EVERYTHING any rando throws at us. */
 	private static List<String> acceptExtensions = Arrays.asList(".png", ".jpg", ".jpeg", ".gif", ".svg", ".mp4", ".mpeg4", ".m4v", ".webm");
-	
+
+	private static StringField SRC = new StringField("src");
+
 	// Don't cache more than 10mb? TODO Think about this for video purposes...
 	private long maxSize = 10000000L;
 	
@@ -94,18 +98,25 @@ public class MediaCacheServlet implements IServlet {
 			throw new WebEx.E403(reqUrl.toString(), "Blocked unsafe characters");
 		}
 		
-		// Strip off trailing extension to get the encoded URL and decode it
-		// TODO Remove ".gl-size-xxx" wart
-		String origUrlEncoded = filename.replaceAll("\\..*$", "");
-		String origUrl = new String(decoder.decode(origUrlEncoded));
-		
+		// The request may come with a param "&src=https://www.domain.com/filename.png"
+		// If so: fetch that URL & store it at the requested filename.
+		// Per our convention the filename should be a digest of the source URL.
+		// Collisions aren't important, security is.
+		String srcUrl = state.get(SRC);
+		if (Utils.isBlank(srcUrl)) {
+			// If not: Assume the filename (minus extension) is a base64-web encoded URL & decode it.
+			// TODO Remove ".gl-size-xxx" wart
+			String srcUrlEncoded = filename.replaceAll("\\..*$", "");
+			srcUrl = new String(decoder.decode(srcUrlEncoded));
+		}
+
 		// Once we have the file, we'll hand off to FileServlet - so keep tabs on its location outside the fetch/wait block
 		File toServe = new File(cacheRoot.getAbsolutePath(), filename);
 		
 		// Don't let other threads try and cache the same file if rapid-fire requests come in!
-		if (!inProgress.containsKey(origUrl)) {
+		if (!inProgress.containsKey(srcUrl)) {
 			Lock running = new ReentrantLock();
-			inProgress.put(origUrl, running);
+			inProgress.put(srcUrl, running);
 			running.lock();
 			
 			// Could be we already downloaded the base version and this is a resize request - skip downloading if so.
@@ -113,13 +124,13 @@ public class MediaCacheServlet implements IServlet {
 				// Handle on where we want the raw copy of the file to be...
 				toServe = FileUtils.getNewFile(new File(cacheRoot.getAbsolutePath(), filename));
 				
-				URL origUrlObj = new URL(origUrl);
-				if (origUrlObj.getHost().equals(reqUrl.getHost()) && origUrlObj.getPath().startsWith("/uploads")) {
+				URL srcUrlObj = new URL(srcUrl);
+				if (srcUrlObj.getHost().equals(reqUrl.getHost()) && srcUrlObj.getPath().startsWith("/uploads")) {
 					// If the file is on this uploads server, create a symlink to it in the requested location.
-					symlink(toServe, new File(webRoot, origUrlObj.getPath()));
+					symlink(toServe, new File(webRoot, srcUrlObj.getPath()));
 				} else {
 					// If it's on another host, fetch and save it.
-					fetch(origUrlObj, toServe);
+					fetch(srcUrlObj, toServe);
 				}
 			}
 			
@@ -132,10 +143,10 @@ public class MediaCacheServlet implements IServlet {
 			
 			// Tell any other threads looking for this file that it's ready
 			running.unlock();
-			inProgress.remove(origUrl);
+			inProgress.remove(srcUrl);
 		} else {
 			// Another thread is already caching the file, wait for it to finish
-			Lock waitFor = inProgress.get(origUrl);
+			Lock waitFor = inProgress.get(srcUrl);
 			waitFor.lock(); // blocks until this lock is available
 			waitFor.unlock();
 		}
