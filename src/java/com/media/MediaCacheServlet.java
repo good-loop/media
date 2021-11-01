@@ -51,6 +51,8 @@ import com.winterwell.web.fields.StringField;
  *
  */
 public class MediaCacheServlet implements IServlet {
+	private static final String LOGTAG = "MediaCacheServlet";
+
 	/** Pull the numbers out of the "Image Size" line of exiftool's output */
 	static Pattern imgSizePattern = Pattern.compile("^Image Size[^\\d]*(\\d+)x(\\d+)", Pattern.MULTILINE);
 	
@@ -177,6 +179,11 @@ public class MediaCacheServlet implements IServlet {
 		
 		// Move the file to the location it was originally requested from, so future calls will be a file hit
 		FileUtils.move(tmpFile, target);
+		fetch2_stripMetaData(target);
+	}
+
+
+	private void fetch2_stripMetaData(File target) {
 		// ...and strip metadata
 		try {
 			Proc.run("exiftool -all= " + target.getAbsolutePath());	
@@ -185,8 +192,8 @@ public class MediaCacheServlet implements IServlet {
 				// Missing exiftool? Log and continue (exif stripping isn't a critical function)
 				Log.e("This server does not have exiftool installed, which is necessary for optimal functioning of MediaCacheServlet.", e);
 			} else {
-				// Any other error? Escalate
-				throw e;
+				// Any other error? swallow (noisily in logs)
+				Log.e(LOGTAG, e);
 			}
 		}
 	}
