@@ -1,4 +1,4 @@
-package com.media.ripper;
+package com.media.ripper.mothballed;
 
 import com.winterwell.utils.Dep;
 import com.winterwell.utils.threads.ATask;

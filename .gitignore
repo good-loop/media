@@ -1,3 +1,11 @@
 web/uploads/*
 logs
+bindependencies
+pom.bob.xml
+media.jar
+bob.log
+boblog
+config/version.properties
+dependencies
 bin
+build-lib

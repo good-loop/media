@@ -1,4 +1,4 @@
-package com.media.ripper;
+package com.media.ripper.mothballed;
 
 import com.winterwell.web.app.ISiteConfig;
 
