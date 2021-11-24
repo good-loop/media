@@ -105,8 +105,8 @@ public class FileProcessor {
 		// Meaning - start by assuming we'll scale to a 720x720 box, but increase whichever dimension is necessary
 		// to maintain original aspect ratio, and round resultant size to a multiple of 2 to satisfy the encoder.
 		// This allows the same command to handle 4:3, 16:9, portrait, and various non-standard aspect ratios. --RM August 2021
-		String command = "taskset -c 0,1,2,3 ffmpeg -i " + inputVideoPath + " -ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 500k -maxrate 500k -bufsize 1000k -pix_fmt yuv420p -vf colorspace=bt709:iall=bt601-6-625:fast=1,scale=480:480:force_original_aspect_ratio=increase:force_divisible_by=2,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1 " + lowResVideoPath
-				+ "; taskset -c 0,1,2,3 ffmpeg -i " + inputVideoPath + " -ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 750k -maxrate 750k -bufsize 1500k -pix_fmt yuv420p -vf colorspace=bt709:iall=bt601-6-625:fast=1,scale=720:720:force_original_aspect_ratio=increase:force_divisible_by=2,setsar=1:1,fps=24/1.001,deblock=filter=strong:block=4 -level:v 3.1 " + highResVideoPath;
+		String command = "taskset -c 0,1,2,3 ffmpeg -i " + inputVideoPath + " -ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 500k -maxrate 500k -bufsize 1000k -pix_fmt yuv420p -vf colorspace=bt709:iall=bt601-6-625:fast=1,scale=480:480:force_original_aspect_ratio=increase:force_divisible_by=2,setsar=1:1,deblock=filter=strong:block=4 -level:v 3.1 " + lowResVideoPath
+				+ "; taskset -c 0,1,2,3 ffmpeg -i " + inputVideoPath + " -ac 2 -c:a aac -b:a 96k -c:v libx264 -b:v 750k -maxrate 750k -bufsize 1500k -pix_fmt yuv420p -vf colorspace=bt709:iall=bt601-6-625:fast=1,scale=720:720:force_original_aspect_ratio=increase:force_divisible_by=2,setsar=1:1,deblock=filter=strong:block=4 -level:v 3.1 " + highResVideoPath;
 		List<String> commands = Arrays.asList("/bin/bash", "-c", command);
 		
 		return new FileProcessor(rawDest, standardDest, mobileDest, commands);
