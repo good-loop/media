@@ -97,10 +97,15 @@ public class FontServlet implements IServlet {
 			KServerType serverType = AppUtils.getServerType(state);
 			String server = AppUtils.getServerUrl(serverType, "media.good-loop.com").toString();
 			String fontName = slugBits[0];
+
+			// Protect against /fonts/../../../../server-home-dir attacks
+			if (!FileUtils.isSafe(fontName)) {
+				throw new WebEx.E400("Given font name contains potentially dangerous components: " + fontName);
+			}
 			
 			File fontDir = new File(fontsRoot, fontName);
 			if (!fontDir.exists()) {
-				throw new WebEx.E400("The requested font \"" + slugBits[0] + "\" does not exist on this server.");
+				throw new WebEx.E400("The requested font \"" + fontName + "\" does not exist on this server.");
 			}
 			File[] list = fontDir.listFiles(); // [EN.woff, EN.woff2, DE.woff, DE.woff2, FR.woff, FR.woff2...]
 			

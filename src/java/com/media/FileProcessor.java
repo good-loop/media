@@ -60,7 +60,7 @@ public class FileProcessor {
 
 
 	/** Assumes that there will already be an image in /uploads/raw for it to find **/
-	public static FileProcessor ImageProcessor(File rawDest, File standardDest, File mobileDest) {
+	public static FileProcessor imageProcessor(File rawDest, File standardDest, File mobileDest) {
 		String inputImagePath = rawDest.getAbsolutePath();
 		String standardImagePath = standardDest.getAbsolutePath();
 		String lowResImagePath = mobileDest.getAbsolutePath();
@@ -99,7 +99,7 @@ public class FileProcessor {
 	}
 
 
-	public static FileProcessor VideoProcessor(File rawDest, File standardDest, File mobileDest, Map params) {
+	public static FileProcessor videoProcessor(File rawDest, File standardDest, File mobileDest, Map params) {
 		String inputVideoPath = rawDest.getAbsolutePath();
 		String lowResVideoPath = mobileDest.getAbsolutePath();
 		String highResVideoPath = standardDest.getAbsolutePath();
@@ -142,9 +142,8 @@ public class FileProcessor {
 	 * @param fontDir Directory to output all generated fonts
 	 * @return
 	 */
-	public static FileProcessor FontProcessor(File rawFont, File fontDir) {
+	public static FileProcessor fontProcessor(File rawFont, File fontDir) {
 		String inputFontPath = rawFont.getAbsolutePath();
-		String baseName = FileUtils.getBasename(rawFont);
 
 		Map<String,File> dests = new HashMap<String, File>();
 
@@ -152,7 +151,7 @@ public class FileProcessor {
 		commands.add("/bin/bash");
 		commands.add("-c");
 		String processSubsetsCommand = "";
-		
+
 		// Generate a non-subsetted, but converted, version of the font
 		File completeWoffDest = new File(fontDir, "all.woff");
 		File completeWoff2Dest = new File(fontDir, "all.woff2");
@@ -161,7 +160,7 @@ public class FileProcessor {
 		processSubsetsCommand += completeConvertCmd.replace("$OUTPUT", completeWoff2Dest.getAbsolutePath());
 		dests.put("all-woff", completeWoffDest);
 		dests.put("all-woff2", completeWoff2Dest);
-		
+
 		// Generate all subsets right now in case we need them later
 		for (String subset : orthographies) {
 			// Subset raw.otf to eg EN.otf, then convert to EN.woff and EN.woff2
@@ -176,7 +175,7 @@ public class FileProcessor {
 
 			// Construct the fontforge command with input = output of subset command
 			String convertCmd = convertCmdBase.replace("$INPUT", subsetDest.getAbsolutePath());
-			
+
 			// Subset, convert to WOFF, convert to WOFF2, delete the unconverted subset.
 			processSubsetsCommand += (
 					subsetCmd

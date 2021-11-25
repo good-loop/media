@@ -224,10 +224,10 @@ public class MediaUploadServlet implements IServlet {
 			Map<String, MediaObject> _assetArr = new ArrayMap();
 
 			if (FileUtils.isImage(tempFile)) {
-				FileProcessor imageProcessor = FileProcessor.ImageProcessor(rawDest, standardDest, mobileDest);
+				FileProcessor imageProcessor = FileProcessor.imageProcessor(rawDest, standardDest, mobileDest);
 				_assetArr = imageProcessor.run(pool);
 			} else if (FileUtils.isVideo(tempFile)) {
-				FileProcessor videoProcessor = FileProcessor.VideoProcessor(rawDest, standardDest, mobileDest, params);
+				FileProcessor videoProcessor = FileProcessor.videoProcessor(rawDest, standardDest, mobileDest, params);
 				_assetArr = videoProcessor.run(pool);
 			} else if (FileUtils.isFont(tempFile)) {
 				// Fonts go in /uploads/fonts/FONT_NAME/
@@ -238,7 +238,7 @@ public class MediaUploadServlet implements IServlet {
 				File rawFontDest = getDestFile(fontDirName, new File("raw." + rawFontExtension));
 				FileUtils.move(rawDest, rawFontDest);
 				// Subsetted versions in same dir named EN.woff, EN.woff2, DE.woff, DE.woff2 etc
-				FileProcessor fontProcessor = FileProcessor.FontProcessor(rawFontDest, baseFontDest);
+				FileProcessor fontProcessor = FileProcessor.fontProcessor(rawFontDest, baseFontDest);
 				_assetArr = fontProcessor.run(pool);
 			}
 			// done
