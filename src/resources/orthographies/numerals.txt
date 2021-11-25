@@ -1,0 +1,10 @@
+0030 # Zero
+0031 # One
+0032 # Two
+0033 # Three
+0034 # Four
+0035 # Five
+0036 # Six
+0037 # Seven
+0038 # Eight
+0039 # Nine

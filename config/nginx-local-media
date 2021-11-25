@@ -8,8 +8,11 @@ server {
 
 	access_log /var/log/nginx/localmedia.good-loop.com/access.log;
 	error_log /var/log/nginx/localmedia.good-loop.com/error.log;
- 
-	
+
+	location ~ \.(ttf|ttc|otf|eot|woff|woff2)$ {
+                add_header Access-Control-Allow-Origin "*";
+        }
+
 	location / {
 		try_files $uri $uri/ @backend;
 	}
