@@ -57,7 +57,7 @@ public class MediaUploadServlet implements IServlet {
 	public static final String ACTION_UPLOAD = "upload";
 	/**
 	 * NB see ConfigBuilder.bytesFromString()
-	 * @param mAX_UPLOAD
+	 * @param maxBytes
 	 */
 	public void setMaxUpload(long maxBytes) {
 		this.MAX_UPLOAD = maxBytes;
@@ -111,28 +111,39 @@ public class MediaUploadServlet implements IServlet {
 		// Will just be null if the file is not a video
 		Dt rawDuration = rawFile.calculateDuration();
 		
-		if( rawFile != null) {
+		if (rawFile != null) {
 			rawFile.duration = rawDuration;
 			addUploadedAssetToCargoAndState(rawFile, "raw", RAW_UPLOAD, cargo, state);
 		}
 		
-		MediaObject standardFile = _assetArr.get("standard");
-		if( standardFile != null ) {
-			// Seems fair to assume that the duration will not have changed based on processing options
-			if( standardFile.duration == null ) standardFile.duration = rawDuration;
-			addUploadedAssetToCargoAndState(standardFile, "standard", STANDARD_UPLOAD, cargo, state);
+		// Font uploads produce many more files than img/video uploads
+		if (FileUtils.isFont(tempFile)) {
+			for (Map.Entry<String, MediaObject> entry : _assetArr.entrySet()) {
+				String field = entry.getKey();
+				MediaObject mo = entry.getValue();
+				if (mo == null) continue;
+				addUploadedAssetToCargoAndState(mo, field, new FileUploadField(field), cargo, state);
+			}
+		} else {
+			MediaObject standardFile = _assetArr.get("standard");
+			if (standardFile != null) {
+				// Seems fair to assume that the duration will not have changed based on processing options
+				if (standardFile.duration == null ) standardFile.duration = rawDuration;
+				addUploadedAssetToCargoAndState(standardFile, "standard", STANDARD_UPLOAD, cargo, state);
+			}
+
+			MediaObject mobileFile = _assetArr.get("mobile");
+			if (mobileFile != null) {
+				// Seems fair to assume that the duration will not have changed based on processing options
+				if( mobileFile.duration == null ) mobileFile.duration = rawDuration;
+				addUploadedAssetToCargoAndState(mobileFile, "mobile", MOBILE_UPLOAD, cargo, state);
+			}
 		}
-		
-		MediaObject mobileFile = _assetArr.get("mobile");		
-		if( mobileFile != null ) {
-			// Seems fair to assume that the duration will not have changed based on processing options
-			if( mobileFile.duration == null ) mobileFile.duration = rawDuration;
-			addUploadedAssetToCargoAndState(mobileFile, "mobile", MOBILE_UPLOAD, cargo, state);
-		}
-		
+
 		return _assetArr;
 	}
-	
+
+
 	protected Map addUploadedAssetToCargoAndState(MediaObject assetObject, String label, FileUploadField uploadField, Map cargo, WebRequest state) {
 		File asset = assetObject.file;
 		Map<String, Object> params = new ArrayMap();
@@ -218,12 +229,24 @@ public class MediaUploadServlet implements IServlet {
 			} else if (FileUtils.isVideo(tempFile)) {
 				FileProcessor videoProcessor = FileProcessor.VideoProcessor(rawDest, standardDest, mobileDest, params);
 				_assetArr = videoProcessor.run(pool);
+			} else if (FileUtils.isFont(tempFile)) {
+				// Fonts go in /uploads/fonts/FONT_NAME/
+				// Original renamed to "raw.ttf" (or "raw.otf" etc)
+				String fontDirName = "fonts/" + FileUtils.getBasename(tempFile);
+				String rawFontExtension = FileUtils.getType(tempFile);
+				File baseFontDest = new File(uploadsDir, fontDirName);
+				File rawFontDest = getDestFile(fontDirName, new File("raw." + rawFontExtension));
+				FileUtils.move(rawDest, rawFontDest);
+				// Subsetted versions in same dir named EN.woff, EN.woff2, DE.woff, DE.woff2 etc
+				FileProcessor fontProcessor = FileProcessor.FontProcessor(rawFontDest, baseFontDest);
+				_assetArr = fontProcessor.run(pool);
 			}
 			// done
 			return _assetArr;
 		
 		// Error handling
 		} catch (Throwable e) {
+			// TODO For fonts, rm -rf the created directory
 			doUpload3_rollback(tempFile, standardDest, mobileDest);
 			throw Utils.runtime(e);
 		}
@@ -283,7 +306,7 @@ public class MediaUploadServlet implements IServlet {
 		// ...upload size
 		MediaConfig conf = Dep.get(MediaConfig.class);
 
-		if (conf.uploadDir!=null) {
+		if (conf.uploadDir != null) {
 			this.setUploadDir(conf.uploadDir);
 			this.setWebRoot(new File("web"));
 			KServerType serverType = AppUtils.getServerType(state);

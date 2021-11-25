@@ -88,7 +88,7 @@
 00A0 #
 00A3 # Pound Sterling Symbol
 00A9 # Copyright Symbol
-00AD # some kind of short minus Symbol
+00AD # Word-break hyphen
 00AE # Registered Symbol
 0384 # Greek Tonos
 0385 # Greek Dialytika Tonos
@@ -183,4 +183,4 @@
 205F #
 20AC # Euro Symbol
 2122 # Trademark Symbol
-25FC # a large filled in square symbol
+25FC # Black Medium Square

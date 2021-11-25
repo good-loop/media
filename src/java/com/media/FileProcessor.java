@@ -1,7 +1,9 @@
 package com.media;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -19,6 +21,9 @@ import com.winterwell.utils.log.Log;
  * See {@link MediaCacheServlet} for info on the directory structure this uses
  * and the non-Java dependencies e.g. imagemagick.
  * 
+ * Font processing requires Python fontTools and FontForge
+ * (sudo pip3 install fonttools, sudo apt install fontforge)
+ * 
  * TODO @Roscoe - Could you add a unit test for this? Thanks.
  * 
  * @author Roscoe
@@ -33,10 +38,14 @@ public class FileProcessor {
 	public static final long MINIMUM_IMAGE_SIZE = 50000;
 	// File types supported by jpegoptim
 	public static final List<String> JPEGOPTIM_SUPPORTED_TYPES = Arrays.asList("jpg", "jpeg");
+	public static final List<String> PROCESSABLE_IMAGE_TYPES = Arrays.asList("jpg", "jpeg", "png");
 	
 	public File rawDest;
 	public File standardDest;
 	public File mobileDest;
+	// Custom destinations to allow overriding default raw/standard/mobile
+	public Map<String, File> dests;
+
 	public final List<String> commands;
 	
 	private FileProcessor(File rawDest, File standardDest, File mobileDest, List<String> commands) {
@@ -48,7 +57,8 @@ public class FileProcessor {
 		
 		this.commands = commands;
 	}
-	
+
+
 	/** Assumes that there will already be an image in /uploads/raw for it to find **/
 	public static FileProcessor ImageProcessor(File rawDest, File standardDest, File mobileDest) {
 		String inputImagePath = rawDest.getAbsolutePath();
@@ -58,30 +68,36 @@ public class FileProcessor {
 		String fileType = FileUtils.getType(rawDest.getName());
 		
 		String command = "";
-		// Raw image will be placed in raw, standard and mobile
-		if( rawDest.length() < MINIMUM_IMAGE_SIZE ) {
+		
+		// Only process JPG, JPEG, PNG - other types just copy into /standard and /mobile		
+		if(!PROCESSABLE_IMAGE_TYPES.contains(fileType) || rawDest.length() < MINIMUM_IMAGE_SIZE) {
 			Log.d("Image file is below 50kB. No processing will be done, but the raw image will be copied to the standard, mobile and raw directories");
+			// TODO Symlink instead of copying, like MediaCacheServlet
 			command = "cp " + inputImagePath + " " + standardImagePath
 					+ "; " + "cp " + inputImagePath + " " + lowResImagePath;
-		} else if(fileType.equals("png")) {
-			// optipng will iterate through different png compression methods and keep the result with smallest file size
-			command = "cp " + inputImagePath + " " + standardImagePath + "; "
-					// Change image mode to indexed (lossy but preserves alpha)
-					+ "/usr/local/bin/pngquant -s1 --strip --verbose --skip-if-larger --force --ext .png " + standardImagePath + "; "
-					// Optimise compression as much as possible
-					+ "/usr/bin/zopflipng -y -m" + standardImagePath + " " + standardImagePath + "; "
-					// Copy result to mobile directory
-					+ "cp " + standardImagePath + " " + lowResImagePath;
 		} else {
-			command = "/usr/bin/convert " + inputImagePath + " -quality " + STANDARD_RES_QUALITY + " " + standardImagePath
-					+ (JPEGOPTIM_SUPPORTED_TYPES.contains(fileType) ? "&& /usr/bin/jpegoptim " + standardImagePath : "")
-					+ "; " + "/usr/bin/convert " + inputImagePath + " -quality " + LOW_RES_QUALITY + " " + lowResImagePath
-					+ (JPEGOPTIM_SUPPORTED_TYPES.contains(fileType) ? "&& /usr/bin/jpegoptim " + lowResImagePath : "");
+			if (JPEGOPTIM_SUPPORTED_TYPES.contains(fileType)) {
+				command = "/usr/bin/convert " + inputImagePath + " -quality " + STANDARD_RES_QUALITY + " " + standardImagePath
+						+ (JPEGOPTIM_SUPPORTED_TYPES.contains(fileType) ? "&& /usr/bin/jpegoptim " + standardImagePath : "")
+						+ "; " + "/usr/bin/convert " + inputImagePath + " -quality " + LOW_RES_QUALITY + " " + lowResImagePath
+						+ (JPEGOPTIM_SUPPORTED_TYPES.contains(fileType) ? "&& /usr/bin/jpegoptim " + lowResImagePath : "");
+			} else {
+				// optipng will iterate through different png compression methods and keep the result with smallest file size
+				command = "cp " + inputImagePath + " " + standardImagePath + "; "
+						// Change image mode to indexed (lossy but preserves alpha)
+						+ "/usr/local/bin/pngquant -s1 --strip --verbose --skip-if-larger --force --ext .png " + standardImagePath + "; "
+						// Optimise compression as much as possible
+						+ "/usr/bin/zopflipng -y -m" + standardImagePath + " " + standardImagePath + "; "
+						// Copy result to mobile directory
+						+ "cp " + standardImagePath + " " + lowResImagePath;
+			}
 		}
+		
 		List<String> commands = Arrays.asList("/bin/bash", "-c", command);
 		
 		return new FileProcessor(rawDest, standardDest, mobileDest, commands);
 	}
+
 
 	public static FileProcessor VideoProcessor(File rawDest, File standardDest, File mobileDest, Map params) {
 		String inputVideoPath = rawDest.getAbsolutePath();
@@ -112,6 +128,75 @@ public class FileProcessor {
 		return new FileProcessor(rawDest, standardDest, mobileDest, commands);
 	}
 	
+	/** List of files containing character subsets for languages / language groups in /media/src/resources/orthographies/ */
+	static List<String> orthographies = Arrays.asList("DE", "EN", "ES", "FR", "IT", "PT", "ARABIC", "CYRILLIC", "EASTERN_EUROPE", "NORDIC", "numerals");
+
+	static String subsetCmdBase = "pyftsubset $INPUT --unicodes-file=/home/winterwell/media/src/resources/orthographies/$SUBSET.txt --output-file=$OUTPUT;";
+	static String convertCmdBase = "fontforge -lang=ff -c 'Open(\"$INPUT\"); Generate(\"$OUTPUT\")';";
+
+
+	/**
+	 * Run an uploaded font through Python fontTools pyftsubset and FontForge conversion
+	 * to generate a set of much smaller, language-specific, web-ready font files.
+	 * @param rawFont Original font in TTF, OTF, WOFF, WOFF2
+	 * @param fontDir Directory to output all generated fonts
+	 * @return
+	 */
+	public static FileProcessor FontProcessor(File rawFont, File fontDir) {
+		String inputFontPath = rawFont.getAbsolutePath();
+		String baseName = FileUtils.getBasename(rawFont);
+
+		Map<String,File> dests = new HashMap<String, File>();
+
+		List<String> commands = new ArrayList();
+		commands.add("/bin/bash");
+		commands.add("-c");
+		String processSubsetsCommand = "";
+		
+		// Generate a non-subsetted, but converted, version of the font
+		File completeWoffDest = new File(fontDir, "all.woff");
+		File completeWoff2Dest = new File(fontDir, "all.woff2");
+		String completeConvertCmd = convertCmdBase.replace("$INPUT", rawFont.getAbsolutePath());
+		processSubsetsCommand += completeConvertCmd.replace("$OUTPUT", completeWoffDest.getAbsolutePath());
+		processSubsetsCommand += completeConvertCmd.replace("$OUTPUT", completeWoff2Dest.getAbsolutePath());
+		dests.put("all-woff", completeWoffDest);
+		dests.put("all-woff2", completeWoff2Dest);
+		
+		// Generate all subsets right now in case we need them later
+		for (String subset : orthographies) {
+			// Subset raw.otf to eg EN.otf, then convert to EN.woff and EN.woff2
+			File subsetDest = new File(fontDir, subset + "-base-subset." + FileUtils.getType(rawFont));
+			File woffDest = new File(fontDir, subset + ".woff");
+			File woff2Dest = new File(fontDir, subset + ".woff2");
+
+			// Construct the pyftsubset command with input, output and subset
+			String subsetCmd = subsetCmdBase.replace("$INPUT", inputFontPath);
+			subsetCmd = subsetCmd.replace("$SUBSET", subset);
+			subsetCmd = subsetCmd.replace("$OUTPUT", subsetDest.getAbsolutePath());
+
+			// Construct the fontforge command with input = output of subset command
+			String convertCmd = convertCmdBase.replace("$INPUT", subsetDest.getAbsolutePath());
+			
+			// Subset, convert to WOFF, convert to WOFF2, delete the unconverted subset.
+			processSubsetsCommand += (
+					subsetCmd
+					+ convertCmd.replace("$OUTPUT", woffDest.getAbsolutePath())
+					+ convertCmd.replace("$OUTPUT", woff2Dest.getAbsolutePath())
+					+ "rm " + subsetDest.getAbsolutePath() + ";"
+			);
+			// Add destination files to output set
+			dests.put(subset + "-woff", woffDest);
+			dests.put(subset + "-woff2", woff2Dest);
+		}
+		// Convert uploaded font to WOFF and WOFF2
+		commands.add(processSubsetsCommand);
+
+		FileProcessor fp = new FileProcessor(rawFont, fontDir, null, commands);
+		fp.dests = dests; // Set custom destination list
+		return fp;
+	}
+
+
 	/** Perform the given conversion operation 
 	 *  Need to provide pool of threads to run from **/
 	public Map<String, MediaObject> run(ExecutorService pool) {
@@ -131,9 +216,16 @@ public class FileProcessor {
 		
 		Map out = new ArrayMap();
 		
-		out.put("raw", new MediaObject(this.rawDest));		
-		out.put("standard", new MediaObject(this.standardDest));
-		out.put("mobile", new MediaObject(this.mobileDest));
+		out.put("raw", new MediaObject(this.rawDest));
+		// Default or custom output files?
+		if (this.dests == null) {
+			out.put("standard", new MediaObject(this.standardDest));
+			out.put("mobile", new MediaObject(this.mobileDest));
+		} else {
+			for (Map.Entry<String, File> destEntry : dests.entrySet()) {
+				out.put(destEntry.getKey(), new MediaObject(destEntry.getValue()));
+			}
+		}
 
 		return out;
 	}
