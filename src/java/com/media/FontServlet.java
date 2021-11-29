@@ -1,48 +1,23 @@
 package com.media;
 
-import static org.junit.Assert.assertThrows;
-
 import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.servlet.http.HttpServletResponse;
 
 import com.winterwell.utils.FailureException;
-import com.winterwell.utils.Proc;
-import com.winterwell.utils.Utils;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.io.FileUtils;
-import com.winterwell.utils.log.Log;
-import com.winterwell.utils.time.Time;
 import com.winterwell.utils.web.WebUtils2;
-import com.winterwell.web.FakeBrowser;
 import com.winterwell.web.WebEx;
-import com.winterwell.web.WebInputException;
 import com.winterwell.web.ajax.JSend;
-import com.winterwell.web.ajax.JsonResponse;
 import com.winterwell.web.ajax.KAjaxStatus;
 import com.winterwell.web.app.AppUtils;
-import com.winterwell.web.app.FileServlet;
 import com.winterwell.web.app.IServlet;
 import com.winterwell.web.app.KServerType;
 import com.winterwell.web.app.WebRequest;
-import com.winterwell.web.fields.StringField;
 
 /**
  * GET /fonts/_list to get a list of uploaded raw fonts & their locations.
