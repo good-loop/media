@@ -107,11 +107,11 @@ public class MediaUploadServlet implements IServlet {
 		// Do the storage!
 		Map<String, MediaObject> _assetArr = doUpload2(tempFile, name, state.getParameterMap());
 		
-		MediaObject rawFile = _assetArr.get("raw");
-		// Will just be null if the file is not a video
-		Dt rawDuration = rawFile.calculateDuration();
-		
+		Dt rawDuration = null;
+		MediaObject rawFile = _assetArr.get("raw");		
 		if (rawFile != null) {
+			// Will just be null if the file is not a video
+			rawDuration = rawFile.calculateDuration();
 			rawFile.duration = rawDuration;
 			addUploadedAssetToCargoAndState(rawFile, "raw", RAW_UPLOAD, cargo, state);
 		}
