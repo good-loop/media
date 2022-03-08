@@ -23,6 +23,8 @@ import com.winterwell.utils.Proc;
 import com.winterwell.utils.Utils;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
+import com.winterwell.utils.time.Dt;
+import com.winterwell.utils.time.TUnit;
 import com.winterwell.utils.time.Time;
 import com.winterwell.utils.web.WebUtils2;
 import com.winterwell.web.FakeBrowser;
@@ -96,8 +98,9 @@ public class MediaCacheServlet implements IServlet {
 		
 		// ...some safety checks on the path against hackers (should we whitelist allowed characters with a regex instead??)
 		String path = state.getRequestPath();
-		if (path.contains("..") || path.contains(";") || path.contains("\n") || path.contains("\r")) {
-			throw new WebEx.E403(reqUrl.toString(), "Blocked unsafe characters");
+		String safepath = FileUtils.safeFilename(path); 
+		if ( ! safepath.equals(path)) {
+			throw new WebEx.E403(reqUrl.toString(), "Blocked unsafe characters (did not match safe version "+safepath+")");
 		}
 		
 		// The request may come with a param "&src=https://www.domain.com/filename.png"
@@ -186,7 +189,8 @@ public class MediaCacheServlet implements IServlet {
 	private void fetch2_stripMetaData(File target) {
 		// ...and strip metadata
 		try {
-			Proc.run("exiftool -all= " + target.getAbsolutePath());	
+			exif(target,true);
+				
 		} catch (Exception e) {
 			if (e.getMessage().contains("Cannot run program")) {
 				// Missing exiftool? Log and continue (exif stripping isn't a critical function)
@@ -199,6 +203,20 @@ public class MediaCacheServlet implements IServlet {
 	}
 	
 	
+	private String exif(File target, boolean all) {
+		String path = target.getAbsolutePath();
+		String safepath = FileUtils.safeFilename(path);
+		// What does -all do??
+		String cmd = "exiftool "+(all?"-all= ":"") + safepath;
+		Proc proc = new Proc(cmd);
+		proc.start();
+		proc.waitFor(new Dt(20, TUnit.SECOND));
+		String output = proc.getOutput();
+		proc.close();
+		return output;
+	}
+
+
 	/**
 	 * Create a relative symlink - eg so "uploads/mediacache/xxxxx.png" can point to "../standard/xxxxx.png"
 	 * @param linkLocation The filename where the link should be created
@@ -230,7 +248,6 @@ public class MediaCacheServlet implements IServlet {
 		try {
 			// Last subdirectory of path should be parseable as an integer for sizing.
 			int targetSize = Integer.parseInt(resizePathMatcher.group(2));
-			String inPath = original.getAbsolutePath();
 			
 			// Check if the requested resize would be an upscale
 			// Also - don't try to resize SVGs. The browser is much better at it than you.
@@ -240,27 +257,28 @@ public class MediaCacheServlet implements IServlet {
 				// - exiftool not installed: log and continue
 				// - exiftool output doesn't match regex: log and continue
 				try {
-					Matcher sizeMatcher = imgSizePattern.matcher(Proc.run("exiftool " + inPath));
+					String exifout = exif(original, false);
+					Matcher sizeMatcher = imgSizePattern.matcher(exifout);
 					int currentSize = Integer.parseInt(sizeMatcher.group("w".equals(scaleType) ? 1 : 2));
 					if (currentSize < targetSize) doResize = false;
 				} catch (Exception e) {
-					if (e.getMessage().contains("Cannot run program")) {
+					if (e.toString().contains("Cannot run program")) {
 						Log.e("This server does not have exiftool installed, which is necessary for optimal functioning of MediaCacheServlet.", e);
 					} else if (e instanceof IllegalStateException || e instanceof IndexOutOfBoundsException) {
-						Log.e("Tried to extract image dimensions using exiftool, but output does not match the expected form.", e);
+						Log.e("Tried to extract image dimensions using exiftool "+original+", but output does not match the expected form.", e);
 					}
 				}
 			}
 
 			// Ensure the output dir exists			
-			File outDir = new File(cacheRoot, path).getParentFile();
+			File outDir = new File(cacheRoot, FileUtils.safeFilename(path)).getParentFile();
 			if (!outDir.exists()) outDir.mkdirs();
-			File outFile = new File(outDir, original.getName());
+			File outFile = new File(outDir, FileUtils.safeFilename(original.getName()));
 			
 			if (doResize) {
 				// `convert -resize` accepts dimensions in forms "100x100" (WxH), "100x" (W only), "x100" (H only)
 				String resizeArg = "w".equals(scaleType) ? (targetSize + "x") : ("x" + targetSize);
-				Proc resize = new Proc("convert " + inPath + " -resize " + resizeArg + " " + outFile.getAbsolutePath());
+				Proc resize = new Proc("convert " +FileUtils.safeFilename(original.getAbsolutePath()) + " -resize " + resizeArg + " " + outFile.getAbsolutePath());
 				resize.start();
 				int ok = resize.waitFor(5000); // 5 seconds... should never happen, but.
 				resize.close();
@@ -278,4 +296,5 @@ public class MediaCacheServlet implements IServlet {
 			throw e;
 		}
 	}
+
 }
