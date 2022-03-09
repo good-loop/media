@@ -189,10 +189,9 @@ public class MediaCacheServlet implements IServlet {
 	private void fetch2_stripMetaData(File target) {
 		// ...and strip metadata
 		try {
-			exif(target,true);
-				
+			exif(target, true);
 		} catch (Exception e) {
-			if (e.getMessage().contains("Cannot run program")) {
+			if (e.toString().contains("Cannot run program")) {
 				// Missing exiftool? Log and continue (exif stripping isn't a critical function)
 				Log.e("This server does not have exiftool installed, which is necessary for optimal functioning of MediaCacheServlet.", e);
 			} else {
@@ -202,12 +201,16 @@ public class MediaCacheServlet implements IServlet {
 		}
 	}
 	
-	
-	private String exif(File target, boolean all) {
+	/**
+	 * Run command exiftool on a file.
+	 * @param target The file to examine/process
+	 * @param stripMetadata True to attempt to remove all metadata.
+	 * @return exiftool's terminal output
+	 */
+	private String exif(File target, boolean stripMetadata) {
 		String path = target.getAbsolutePath();
 		String safepath = FileUtils.safeFilename(path);
-		// What does -all do??
-		String cmd = "exiftool "+(all?"-all= ":"") + safepath;
+		String cmd = "exiftool " + (stripMetadata ? "-all= " : "") + safepath;
 		Proc proc = new Proc(cmd);
 		proc.start();
 		proc.waitFor(new Dt(20, TUnit.SECOND));
