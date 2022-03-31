@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletResponse;
 
-import com.google.common.util.concurrent.Service.State;
 import com.winterwell.utils.FailureException;
 import com.winterwell.utils.Proc;
 import com.winterwell.utils.Utils;
