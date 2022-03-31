@@ -98,9 +98,8 @@ public class MediaCacheServlet implements IServlet {
 		
 		// ...some safety checks on the path against hackers (should we whitelist allowed characters with a regex instead??)
 		String path = state.getRequestPath();
-		String safepath = FileUtils.safeFilename(path); 
-		if ( ! safepath.equals(path)) {
-			throw new WebEx.E403(reqUrl.toString(), "Blocked unsafe characters (did not match safe version "+safepath+")");
+		if (!FileUtils.isSafe(path)) {
+			throw new WebEx.E403(reqUrl.toString(), "Blocked unsafe characters (path: "+path+")");
 		}
 		
 		// The request may come with a param "&src=https://www.domain.com/filename.png"
@@ -209,8 +208,13 @@ public class MediaCacheServlet implements IServlet {
 	 */
 	private String exif(File target, boolean stripMetadata) {
 		String path = target.getAbsolutePath();
-		String safepath = FileUtils.safeFilename(path);
-		String cmd = "exiftool " + (stripMetadata ? "-all= " : "") + safepath;
+		
+		// A check is already done in process() - but just in case anything else ever calls this method
+		if (!FileUtils.isSafe(path)) {
+			throw new WebEx.E403("Unsafe characters (path: "+path+")");
+		}
+		
+		String cmd = "exiftool " + (stripMetadata ? "-all= " : "") + path;
 		Proc proc = new Proc(cmd);
 		proc.start();
 		proc.waitFor(new Dt(20, TUnit.SECOND));
@@ -262,6 +266,7 @@ public class MediaCacheServlet implements IServlet {
 				try {
 					String exifout = exif(original, false);
 					Matcher sizeMatcher = imgSizePattern.matcher(exifout);
+					sizeMatcher.find();
 					int currentSize = Integer.parseInt(sizeMatcher.group("w".equals(scaleType) ? 1 : 2));
 					if (currentSize < targetSize) doResize = false;
 				} catch (Exception e) {
@@ -281,7 +286,7 @@ public class MediaCacheServlet implements IServlet {
 			if (doResize) {
 				// `convert -resize` accepts dimensions in forms "100x100" (WxH), "100x" (W only), "x100" (H only)
 				String resizeArg = "w".equals(scaleType) ? (targetSize + "x") : ("x" + targetSize);
-				Proc resize = new Proc("convert " +FileUtils.safeFilename(original.getAbsolutePath()) + " -resize " + resizeArg + " " + outFile.getAbsolutePath());
+				Proc resize = new Proc("convert " + original.getAbsolutePath() + " -resize " + resizeArg + " " + outFile.getAbsolutePath());
 				resize.start();
 				int ok = resize.waitFor(5000); // 5 seconds... should never happen, but.
 				resize.close();
