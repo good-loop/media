@@ -143,11 +143,11 @@ public class MediaCacheServlet implements IServlet {
 				toServe = maybeResize(path, toServe);
 			} catch (Exception e) {
 				throw new WebEx.E50X(e);
+			} finally {
+				// Tell any other threads looking for this file that it's ready
+				running.unlock();
+				inProgress.remove(srcUrl);
 			}
-			
-			// Tell any other threads looking for this file that it's ready
-			running.unlock();
-			inProgress.remove(srcUrl);
 		} else {
 			// Another thread is already caching the file, wait for it to finish
 			Lock waitFor = inProgress.get(srcUrl);
@@ -231,6 +231,8 @@ public class MediaCacheServlet implements IServlet {
 	 * @throws IOException
 	 */
 	private void symlink(File linkLocation, File targetFile) throws IOException {
+		 // Already done - eg propagated across GlusterFS by MediaCacheServlet on another server? Silently continue.
+		if (targetFile.exists()) return; 
 		Path link = linkLocation.getAbsoluteFile().toPath(); // abs location to create symlink at
 		Path tgt = targetFile.getCanonicalFile().toPath(); // abs location of link target
 		Path relTgt = link.getParent().relativize(tgt);
