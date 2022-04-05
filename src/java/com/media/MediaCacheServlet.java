@@ -16,7 +16,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.HttpServletResponse;
 
 import com.winterwell.utils.FailureException;
 import com.winterwell.utils.Proc;
@@ -25,11 +24,8 @@ import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.Dt;
 import com.winterwell.utils.time.TUnit;
-import com.winterwell.utils.time.Time;
-import com.winterwell.utils.web.WebUtils2;
 import com.winterwell.web.FakeBrowser;
 import com.winterwell.web.WebEx;
-import com.winterwell.web.WebInputException;
 import com.winterwell.web.app.FileServlet;
 import com.winterwell.web.app.IServlet;
 import com.winterwell.web.app.WebRequest;
@@ -141,7 +137,11 @@ public class MediaCacheServlet implements IServlet {
 			// Does the path contain an implicit resize request?
 			try {
 				toServe = maybeResize(path, toServe);
+			} catch (IllegalArgumentException e) {
+				// This will be a "requested unsafe path" exception - 403 Forbidden
+				throw new WebEx.E403(reqUrl.toString(), e.getMessage());
 			} catch (Exception e) {
+				// Something unexpected went wrong
 				throw new WebEx.E50X(e);
 			} finally {
 				// Tell any other threads looking for this file that it's ready
@@ -232,7 +232,7 @@ public class MediaCacheServlet implements IServlet {
 	 */
 	private void symlink(File linkLocation, File targetFile) throws IOException {
 		 // Already done - eg propagated across GlusterFS by MediaCacheServlet on another server? Silently continue.
-		if (targetFile.exists()) return; 
+		if (linkLocation.exists()) return;
 		Path link = linkLocation.getAbsoluteFile().toPath(); // abs location to create symlink at
 		Path tgt = targetFile.getCanonicalFile().toPath(); // abs location of link target
 		Path relTgt = link.getParent().relativize(tgt);
@@ -246,10 +246,15 @@ public class MediaCacheServlet implements IServlet {
 	 * @param original The raw image to be scaled
 	 * @throws Exception 
 	 */
-	private File maybeResize(String path, File original) throws Exception {
+	private File maybeResize(String path, File original) throws IllegalArgumentException, Exception {
 		// Is the request path a well-formed "scale to width/height X" directory?
 		Matcher resizePathMatcher = resizePathPattern.matcher(path);
 		if (!resizePathMatcher.find()) return original; // No, it's not. No resizing needed.
+		
+		// Don't want to throw WebEx directly from in here as we don't have access to the request URL to do it properly
+		if (!FileUtils.isSafe(path)) {
+			throw new IllegalArgumentException("Blocked unsafe characters (path: "+path+")");
+		}
 		
 		// "w" or "h"
 		String scaleType = resizePathMatcher.group(1);
@@ -265,8 +270,9 @@ public class MediaCacheServlet implements IServlet {
 				// Failure modes:
 				// - exiftool not installed: log and continue
 				// - exiftool output doesn't match regex: log and continue
+				String exifout = ""; // make available in the catch block for debugging
 				try {
-					String exifout = exif(original, false);
+					exifout = exif(original, false);
 					Matcher sizeMatcher = imgSizePattern.matcher(exifout);
 					sizeMatcher.find();
 					int currentSize = Integer.parseInt(sizeMatcher.group("w".equals(scaleType) ? 1 : 2));
@@ -276,14 +282,15 @@ public class MediaCacheServlet implements IServlet {
 						Log.e("This server does not have exiftool installed, which is necessary for optimal functioning of MediaCacheServlet.", e);
 					} else if (e instanceof IllegalStateException || e instanceof IndexOutOfBoundsException) {
 						Log.e("Tried to extract image dimensions using exiftool "+original+", but output does not match the expected form.", e);
+						Log.i(LOGTAG, "Unexpected exiftool output was: \n" + exifout);
 					}
 				}
 			}
 
 			// Ensure the output dir exists			
-			File outDir = new File(cacheRoot, FileUtils.safeFilename(path)).getParentFile();
+			File outDir = new File(cacheRoot, path).getParentFile();
 			if (!outDir.exists()) outDir.mkdirs();
-			File outFile = new File(outDir, FileUtils.safeFilename(original.getName()));
+			File outFile = new File(outDir, original.getName());
 			
 			if (doResize) {
 				// `convert -resize` accepts dimensions in forms "100x100" (WxH), "100x" (W only), "x100" (H only)
