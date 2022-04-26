@@ -9,4 +9,5 @@ PROJECT_USES_BOB="yes" \
 PROJECT_USES_NPM="no" \
 PROJECT_USES_WEBPACK="no" \
 PROJECT_USES_JERBIL="no" \
-PROJECT_USES_WWAPPBASE_SYMLINK="no"
+PROJECT_USES_WWAPPBASE_SYMLINK="no" \
+PROJECT_LOG_FILE="/home/winterwell/media.good-loop.com/logs/media.log"
