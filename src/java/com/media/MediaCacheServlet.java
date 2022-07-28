@@ -1,5 +1,6 @@
 package com.media;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -20,6 +21,7 @@ import java.util.regex.Pattern;
 import com.winterwell.utils.FailureException;
 import com.winterwell.utils.Proc;
 import com.winterwell.utils.Utils;
+import com.winterwell.utils.WrappedException;
 import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.Dt;
@@ -154,8 +156,11 @@ public class MediaCacheServlet implements IServlet {
 			waitFor.lock(); // blocks until this lock is available
 			waitFor.unlock();
 		}
-		
-		FileServlet.serveFile(toServe, state);
+		try {
+			FileServlet.serveFile(toServe, state);
+		} catch (WrappedException | EOFException ex) {
+			Log.i(LOGTAG, ex+" for "+state); // most likely the remote browser disconnected
+		}
 	}
 	
 	
