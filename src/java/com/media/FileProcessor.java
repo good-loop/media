@@ -39,6 +39,7 @@ public class FileProcessor {
 	// File types supported by jpegoptim
 	public static final List<String> JPEGOPTIM_SUPPORTED_TYPES = Arrays.asList("jpg", "jpeg");
 	public static final List<String> PROCESSABLE_IMAGE_TYPES = Arrays.asList("jpg", "jpeg", "png");
+	private static final String LOGTAG = null;
 	
 	public File rawDest;
 	public File standardDest;
@@ -200,16 +201,23 @@ public class FileProcessor {
 	 *  Need to provide pool of threads to run from **/
 	public Map<String, MediaObject> run(ExecutorService pool) {
 		pool.submit(() -> {
-				Proc process = new Proc(this.commands);
+			Proc process = new Proc(this.commands);
 			try {
+				Log.d(LOGTAG, "run "+process);
 				process.start();
 				process.waitFor();
 				Log.d(process.getOutput());
 				if ( ! Utils.isBlank(process.getError())) {
-					Log.e(process.getError());
+					if (process.getError().contains("SEAC-like endchar operator is deprecated")) {
+						// this is an ignorable warning about a font accent character
+						Log.d(LOGTAG, "(ignore warning) process: "+process+" >>> "+process.getError());
+					}
+					Log.e(LOGTAG, "process: "+process+" >>> "+process.getError());
 				}
 			} catch (Throwable e) {
-				Log.e(e);
+				Log.e(LOGTAG, e);
+			} finally {
+				FileUtils.close(process);
 			}
 		});
 		
