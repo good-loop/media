@@ -62,7 +62,7 @@ public class MediaCacheServlet implements IServlet {
 	static Map<String, Lock> inProgress = new HashMap<String, Lock>();
 	
 	/** Let's not cache EVERYTHING any rando throws at us. */
-	private static List<String> acceptExtensions = Arrays.asList(".png", ".jpg", ".jpeg", ".gif", ".svg", ".mp4", ".mpeg4", ".m4v", ".webm");
+	private static List<String> acceptExtensions = Arrays.asList(".png", ".jpg", ".jpeg", ".gif", ".svg", ".mp4", ".mpeg4", ".m4v", ".webm", ".webp");
 
 	private static StringField SRC = new StringField("src");
 
