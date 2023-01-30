@@ -3,6 +3,7 @@ package com.media;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
@@ -26,7 +27,6 @@ import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.Dt;
 import com.winterwell.utils.time.TUnit;
-import com.winterwell.web.FakeBrowser;
 import com.winterwell.web.WebEx;
 import com.winterwell.web.app.FileServlet;
 import com.winterwell.web.app.IServlet;
@@ -89,7 +89,11 @@ public class MediaCacheServlet implements IServlet {
 		String filename = reqUrl.getPath().replaceAll("^.*\\/", "");
 		
 		// Is someone trying to cache something they shouldn't?
-		String extension = filename.substring(filename.lastIndexOf('.')).toLowerCase();
+		int lastDot = filename.lastIndexOf('.');
+		if (lastDot < 0) {
+			throw new WebEx.E403("Can't infer type from filename: " + filename);
+		}
+		String extension = filename.substring(lastDot).toLowerCase();
 		if (!acceptExtensions.contains(extension)) {
 			throw new WebEx.E403("We don't cache this file type: " + extension);
 		}
@@ -174,16 +178,33 @@ public class MediaCacheServlet implements IServlet {
 	private void fetch(URL source, File target) throws IOException, WebEx.E403 {
 		// Get response headers and check the file size before we load the whole file
 		HttpURLConnection conn = (HttpURLConnection) source.openConnection();
-		long size = Integer.parseInt(conn.getHeaderField("Content-Length"));
+		long size = conn.getContentLengthLong();
 		if (size > maxSize) {
 			throw new WebEx.E403("File too big to cache: " + (size / 1024) + "KB");
 		}
+
+		// Size may also be -1 for "unknown size, using chunked transfer"
+		// In that case, we just have to download the file & fail out if it's huge.
+		File tmpFile = FileUtils.createTempFile(target.getName(), null);
+		FileUtils.copy(conn.getInputStream(), tmpFile);
 		conn.disconnect();
-				
-		// Fetch the file. Could reuse the connection we used to check size but FakeBrowser skips a LOT of boilerplate
-		FakeBrowser fb = new FakeBrowser();
-		File tmpFile = fb.getFile(source.toString());
+
+		if (tmpFile.length() > maxSize) {
+			throw new WebEx.E403("File too big to cache: " + (tmpFile.length() / 1024) + "KB");
+			// TODO Protect against a possible DOS attack which repeatedly requests download of a large file
+			// from a server which uses chunked encoding (so we can't quickly abort after reading the Content-Length header)
+			// Quick solution - copy a small "FILE TOO BIG" png or similar to the target file, so future requests are a cache hit & don't provoke another download
+			// Also - can we read the InputStream to a file in a way that allows us to stop when it passes the size limit, rather than downloading the while thing?
+			// The full file might be hundreds of megabytes or gigabytes - or it could be a malicious server which spews an endless stream of junk data and fills the disk.
+		}
 		
+		// TODO While working on the awkward case of https://logo.clearbit.com/https%3A/duckduckgo.com/ another weird wrinkle came up:
+		// The adunit requests the file as webp, and the source URL has no extension of its own
+		// - so it's saved as .webp, even though the file received is PNG.
+		// It's then served back, unconverted, to a client which just asked for .webp
+		// So... at this point we should probably use exiftool to sniff the actual format & adjust the target filename,
+		// so conversion gets properly triggered further down the line.
+
 		// Move the file to the location it was originally requested from, so future calls will be a file hit
 		FileUtils.move(tmpFile, target);
 		fetch2_stripMetaData(target);
