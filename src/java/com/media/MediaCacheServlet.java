@@ -27,6 +27,7 @@ import com.winterwell.utils.io.FileUtils;
 import com.winterwell.utils.log.Log;
 import com.winterwell.utils.time.Dt;
 import com.winterwell.utils.time.TUnit;
+import com.winterwell.web.FakeBrowser;
 import com.winterwell.web.WebEx;
 import com.winterwell.web.app.FileServlet;
 import com.winterwell.web.app.IServlet;
@@ -67,7 +68,7 @@ public class MediaCacheServlet implements IServlet {
 	private static StringField SRC = new StringField("src");
 
 	// Don't cache more than 10mb? TODO Think about this for video purposes...
-	private long maxSize = 10000000L;
+	private long maxSize = 10L * 1024 * 1024;
 	
 	private File webRoot = new File("web/");
 	
@@ -178,26 +179,30 @@ public class MediaCacheServlet implements IServlet {
 	private void fetch(URL source, File target) throws IOException, WebEx.E403 {
 		// Get response headers and check the file size before we load the whole file
 		HttpURLConnection conn = (HttpURLConnection) source.openConnection();
-		long size = conn.getContentLengthLong();
-		if (size > maxSize) {
-			throw new WebEx.E403("File too big to cache: " + (size / 1024) + "KB");
+		try {
+			long size = conn.getContentLengthLong();
+			if (size > maxSize) {
+				fetch2_tooLarge(source, target, size);
+				return;
+			}
+		} finally {
+			conn.disconnect();	
+		}		
+
+		// Size may also be -1, signifying "unknown size, using chunked transfer" or "more bytes than a long can hold"
+		// In most cases this will be fine, but make sure FakeBrowser knows about our limits too.
+		FakeBrowser fb = new FakeBrowser();
+		fb.setMaxDownload((int) maxSize);
+
+		File tmpFile;
+		try {
+			tmpFile = fb.getFile(source.toString());
+		} catch (Exception e) {
+			// TODO Is there an exception here, or just an error flag to check on fb?
+			fetch2_tooLarge(source, target, -1);
+			return;
 		}
 
-		// Size may also be -1 for "unknown size, using chunked transfer"
-		// In that case, we just have to download the file & fail out if it's huge.
-		File tmpFile = FileUtils.createTempFile(target.getName(), null);
-		FileUtils.copy(conn.getInputStream(), tmpFile);
-		conn.disconnect();
-
-		if (tmpFile.length() > maxSize) {
-			throw new WebEx.E403("File too big to cache: " + (tmpFile.length() / 1024) + "KB");
-			// TODO Protect against a possible DOS attack which repeatedly requests download of a large file
-			// from a server which uses chunked encoding (so we can't quickly abort after reading the Content-Length header)
-			// Quick solution - copy a small "FILE TOO BIG" png or similar to the target file, so future requests are a cache hit & don't provoke another download
-			// Also - can we read the InputStream to a file in a way that allows us to stop when it passes the size limit, rather than downloading the while thing?
-			// The full file might be hundreds of megabytes or gigabytes - or it could be a malicious server which spews an endless stream of junk data and fills the disk.
-		}
-		
 		// TODO While working on the awkward case of https://logo.clearbit.com/https%3A/duckduckgo.com/ another weird wrinkle came up:
 		// The adunit requests the file as webp, and the source URL has no extension of its own
 		// - so it's saved as .webp, even though the file received is PNG.
@@ -209,6 +214,20 @@ public class MediaCacheServlet implements IServlet {
 		FileUtils.move(tmpFile, target);
 		fetch2_stripMetaData(target);
 	}
+
+
+	/**
+	 * When a too-large file is requested - copy a small placeholder into the target location
+	 * so future requests for the same file are cache hits & to signal failure to user.
+	 * @param source File attempted to fetch
+	 * @param target Disk location file should be saved at
+	 * @param size Size in bytes or -1 for unknown
+	 */
+	private void fetch2_tooLarge(URL source, File target, long size) {
+		FileUtils.copy(new File("./src/resources/too-large-placeholder.png"), target);
+		String sizeDesc = (size < 0) ? "unknown total size, chunked download" : (size / 1024) + "KB";
+		Log.e(LOGTAG, "Tried to cache \"" + source + "\", but file was too large (" + sizeDesc + ")");
+	};
 
 
 	private void fetch2_stripMetaData(File target) {
