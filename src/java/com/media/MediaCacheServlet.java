@@ -117,27 +117,26 @@ public class MediaCacheServlet implements IServlet {
 		
 		// Don't let other threads try and cache the same file if rapid-fire requests come in!
 		if (!inProgress.containsKey(srcUrl)) {
-			Lock running = new ReentrantLock();
-			inProgress.put(srcUrl, running);
-			running.lock();
-			
-			// Could be we already downloaded the base version and this is a resize request - skip downloading if so.
-			if (!toServe.exists()) {
-				// Handle on where we want the raw copy of the file to be...
-				toServe = FileUtils.getNewFile(new File(cacheRoot.getAbsolutePath(), filename));
-				
-				URL srcUrlObj = new URL(srcUrl);
-				if (srcUrlObj.getHost().equals(reqUrl.getHost()) && srcUrlObj.getPath().startsWith("/uploads")) {
-					// If the file is on this uploads server, create a symlink to it in the requested location.
-					symlink(toServe, new File(webRoot, srcUrlObj.getPath()));
-				} else {
-					// If it's on another host, fetch and save it.
-					fetch(srcUrlObj, toServe);
-				}
-			}
-			
-			// Does the path contain an implicit resize request?
+			Lock running = null;
 			try {
+				running = new ReentrantLock();
+				inProgress.put(srcUrl, running);
+				running.lock();
+				// Could be we already downloaded the base version and this is a resize request - skip downloading if so.
+				if (!toServe.exists()) {
+					// Handle on where we want the raw copy of the file to be...
+					toServe = FileUtils.getNewFile(new File(cacheRoot.getAbsolutePath(), filename));
+					
+					URL srcUrlObj = new URL(srcUrl);
+					if (srcUrlObj.getHost().equals(reqUrl.getHost()) && srcUrlObj.getPath().startsWith("/uploads")) {
+						// If the file is on this uploads server, create a symlink to it in the requested location.
+						symlink(toServe, new File(webRoot, srcUrlObj.getPath()));
+					} else {
+						// If it's on another host, fetch and save it.
+						fetch(srcUrlObj, toServe);
+					}
+				}
+				// Does the path contain an implicit resize request?
 				toServe = maybeResize(path, toServe);
 			} catch (IllegalArgumentException e) {
 				// This will be a "requested unsafe path" exception - 403 Forbidden
@@ -147,14 +146,14 @@ public class MediaCacheServlet implements IServlet {
 				throw new WebEx.E50X(e);
 			} finally {
 				// Tell any other threads looking for this file that it's ready
-				running.unlock();
+				if (running != null) running.unlock();
 				inProgress.remove(srcUrl);
 			}
 		} else {
 			// Another thread is already caching the file, wait for it to finish
 			Lock waitFor = inProgress.get(srcUrl);
 			waitFor.lock(); // blocks until this lock is available
-			waitFor.unlock();
+			waitFor.unlock(); // free it immediately
 		}
 		try {
 			FileServlet.serveFile(toServe, state);
@@ -162,8 +161,8 @@ public class MediaCacheServlet implements IServlet {
 			Log.i(LOGTAG, ex+" for "+state); // most likely the remote browser disconnected
 		}
 	}
-	
-	
+
+
 	/**
 	 * Get a resource from a remote server and save it locally.
 	 * @param source
