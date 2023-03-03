@@ -230,6 +230,9 @@ public class MediaUploadServlet implements IServlet {
 				// Subsetted versions in same dir named EN.woff, EN.woff2, DE.woff, DE.woff2 etc
 				FileProcessor fontProcessor = FileProcessor.fontProcessor(rawFontDest, baseFontDest);
 				_assetArr = fontProcessor.run(pool);
+			} else if (FileUtils.isDocument(tempFile)) {
+				// Documents are currently not processed in any way.
+				_assetArr = Map.of("raw", new MediaObject(rawDest));
 			}
 			// done
 			return _assetArr;
