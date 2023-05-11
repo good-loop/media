@@ -3,6 +3,7 @@ package com.media;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
@@ -66,7 +67,7 @@ public class MediaCacheServlet implements IServlet {
 	private static StringField SRC = new StringField("src");
 
 	// Don't cache more than 10mb? TODO Think about this for video purposes...
-	private long maxSize = 10000000L;
+	private long maxSize = 10L * 1024 * 1024;
 	
 	private File webRoot = new File("web/");
 	
@@ -88,7 +89,11 @@ public class MediaCacheServlet implements IServlet {
 		String filename = reqUrl.getPath().replaceAll("^.*\\/", "");
 		
 		// Is someone trying to cache something they shouldn't?
-		String extension = filename.substring(filename.lastIndexOf('.')).toLowerCase();
+		int lastDot = filename.lastIndexOf('.');
+		if (lastDot < 0) {
+			throw new WebEx.E403("Can't infer type from filename: " + filename);
+		}
+		String extension = filename.substring(lastDot).toLowerCase();
 		if (!acceptExtensions.contains(extension)) {
 			throw new WebEx.E403("We don't cache this file type: " + extension);
 		}
@@ -172,20 +177,55 @@ public class MediaCacheServlet implements IServlet {
 	private void fetch(URL source, File target) throws IOException, WebEx.E403 {
 		// Get response headers and check the file size before we load the whole file
 		HttpURLConnection conn = (HttpURLConnection) source.openConnection();
-		long size = Integer.parseInt(conn.getHeaderField("Content-Length"));
-		if (size > maxSize) {
-			throw new WebEx.E403("File too big to cache: " + (size / 1024) + "KB");
-		}
-		conn.disconnect();
-				
-		// Fetch the file. Could reuse the connection we used to check size but FakeBrowser skips a LOT of boilerplate
+		try {
+			long size = conn.getContentLengthLong();
+			if (size > maxSize) {
+				fetch2_tooLarge(source, target, size);
+				return;
+			}
+		} finally {
+			conn.disconnect();	
+		}		
+
+		// Size may also be -1, signifying "unknown size, using chunked transfer" or "more bytes than a long can hold"
+		// In most cases this will be fine, but make sure FakeBrowser knows about our limits too.
 		FakeBrowser fb = new FakeBrowser();
-		File tmpFile = fb.getFile(source.toString());
-		
+		fb.setMaxDownload((int) maxSize);
+
+		File tmpFile;
+		try {
+			tmpFile = fb.getFile(source.toString());
+		} catch (Exception e) {
+			// TODO Is there an exception here, or just an error flag to check on fb?
+			fetch2_tooLarge(source, target, -1);
+			return;
+		}
+
+		// TODO While working on the awkward case of https://logo.clearbit.com/https%3A/duckduckgo.com/ another weird wrinkle came up:
+		// The adunit requests the file as webp, and the source URL has no extension of its own
+		// - so it's saved as .webp, even though the file received is PNG.
+		// It's then served back, unconverted, to a client which just asked for .webp
+		// So... at this point we should probably use exiftool to sniff the actual format & adjust the target filename,
+		// so conversion gets properly triggered further down the line.
+
 		// Move the file to the location it was originally requested from, so future calls will be a file hit
 		FileUtils.move(tmpFile, target);
 		fetch2_stripMetaData(target);
 	}
+
+
+	/**
+	 * When a too-large file is requested - copy a small placeholder into the target location
+	 * so future requests for the same file are cache hits & to signal failure to user.
+	 * @param source File attempted to fetch
+	 * @param target Disk location file should be saved at
+	 * @param size Size in bytes or -1 for unknown
+	 */
+	private void fetch2_tooLarge(URL source, File target, long size) {
+		FileUtils.copy(new File("./src/resources/too-large-placeholder.png"), target);
+		String sizeDesc = (size < 0) ? "unknown total size, chunked download" : (size / 1024) + "KB";
+		Log.e(LOGTAG, "Tried to cache \"" + source + "\", but file was too large (" + sizeDesc + ")");
+	};
 
 
 	private void fetch2_stripMetaData(File target) {
