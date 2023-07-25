@@ -294,16 +294,31 @@ public class MediaCacheServlet implements IServlet {
 			File outDir = new File(cacheRoot, path).getParentFile();
 			if (!outDir.exists()) outDir.mkdirs();
 			File outFile = new File(outDir, original.getName());
-			
+
+			String inFormat = FileUtils.getType(original);
+			String outFormat = FileUtils.getType(outFile);
+			boolean doConvert = !inFormat.equalsIgnoreCase(outFormat);
+
+			String resizeArg = "";
+			String convertArg = "";
+
 			if (doResize) {
 				// `convert -resize` accepts dimensions in forms "100x100" (WxH), "100x" (W only), "x100" (H only)
-				String resizeArg = "w".equals(scaleType) ? (targetSize + "x") : ("x" + targetSize);
-				Proc resize = new Proc("convert " + original.getAbsolutePath() + " -resize " + resizeArg + " " + outFile.getAbsolutePath());
-				resize.start();
-				int ok = resize.waitFor(5000); // 5 seconds... should never happen, but.
-				resize.close();
+				resizeArg = " -resize " + ("w".equals(scaleType) ? (targetSize + "x") : ("x" + targetSize));
+			}
+			if (doConvert) {
+				// default webp conversion can produce absolutely deep-fried images, but high-quality compression still beats jpg
+				// see ticket https://good-loop.monday.com/boards/2603585504/views/60487313/pulses/3943458907
+				if ("webp".equals(outFormat)) convertArg = " -quality 90";
+			}
+
+			if (doResize || doConvert) {
+				Proc processImage = new Proc("convert " + original.getAbsolutePath() + resizeArg + convertArg + " " + outFile.getAbsolutePath());
+				processImage.start();
+				int ok = processImage.waitFor(5000); // 5 seconds... should never happen, but.
+				processImage.close();
 			} else {
-				// Requested size is larger? Symlink the original instead of upscaling needlessly
+				// Result would be unchanged / scaled larger? Just symlink the original.
 				symlink(outFile, original);
 			} 
 			
