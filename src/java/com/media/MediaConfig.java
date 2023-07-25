@@ -25,7 +25,7 @@ public class MediaConfig implements IESRouter, ISiteConfig {
 	public File uploadDir;
 	
 	@Option(description="Base URL for our stored media files")
-	public String uploadBaseUrl;
+	public String uploadBaseUrl = "https://localmedia.good-loop.com";
 	
 	@Override
 	public <T> ESPath<T> getPath(CharSequence dataspace, Class<T> type, CharSequence id, Object status) {
