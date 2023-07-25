@@ -68,8 +68,10 @@ public class MediaUploadServlet implements IServlet {
 		this.webRoot = webRoot;
 	}
 	
+	private final MediaConfig conf;
 	
 	public MediaUploadServlet() {
+		conf = Dep.get(MediaConfig.class);
 	}
 	
 	String server = "/";
@@ -149,12 +151,15 @@ public class MediaUploadServlet implements IServlet {
 			// Return duration rounded to nearest integer
 			params.put("duration", (int) Math.round(assetObject.duration.getValue()));	
 		}
-		
-		String relpath = FileUtils.getRelativePath(asset, webRoot);
+
+		// Sort out the URL based on our configured base URL and upload folder
 		// ugly code to avoid // inside the path whatever the path bits
-		if (relpath.startsWith("/")) relpath.substring(1);		
-		String url = server +(server.endsWith("/")? "" : "/")+relpath;
-		params.put("url", url);
+		String uploadPath = conf.uploadDir.getAbsolutePath();
+		if (!uploadPath.endsWith("/")) uploadPath+="/";			// Ensure no leading / in the assetPath
+		String absPath = asset.getAbsolutePath();
+		assert(absPath.startsWith(uploadPath));					// I have trust issues ...
+		String assetPath = absPath.substring(uploadPath.length());
+		params.put("url", conf.uploadBaseUrl + (conf.uploadBaseUrl.endsWith("/")?"":"/") + assetPath);
 		
 		cargo.put(label, params);
 		state.put(uploadField, asset);
@@ -297,8 +302,6 @@ public class MediaUploadServlet implements IServlet {
 	@Override
 	public void process(WebRequest state) throws Exception {		
 		// ...upload size
-		MediaConfig conf = Dep.get(MediaConfig.class);
-
 		if (conf.uploadDir != null) {
 			this.setUploadDir(conf.uploadDir);
 			this.setWebRoot(new File("web"));

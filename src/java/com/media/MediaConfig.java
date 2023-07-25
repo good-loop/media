@@ -21,8 +21,11 @@ public class MediaConfig implements IESRouter, ISiteConfig {
 	@Option(description="How big can an individual video file be? e.g. 10mb or 1gb")
 	public String maxVideoUpload = "50mb";
 	
-	@Option
+	@Option(description="Base filesystem path for our stored media files")
 	public File uploadDir;
+	
+	@Option(description="Base URL for our stored media files")
+	public String uploadBaseUrl;
 	
 	@Override
 	public <T> ESPath<T> getPath(CharSequence dataspace, Class<T> type, CharSequence id, Object status) {
