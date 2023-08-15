@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.winterwell.utils.Dep;
 import com.winterwell.utils.FailureException;
 import com.winterwell.utils.containers.ArrayMap;
 import com.winterwell.utils.io.FileUtils;
@@ -30,15 +31,24 @@ import com.winterwell.web.app.WebRequest;
  *
  */
 public class FontServlet implements IServlet {
-	private File webRoot = new File("web/");
 	
-	private File fontsRoot = new File(webRoot, "uploads/fonts/");
-	{
-		if (!fontsRoot.exists()) {
+	private File fontsRoot;
+	
+	public FontServlet() {
+		File uploadDir;
+		MediaConfig mc = Dep.getWithDefault(MediaConfig.class, null);
+		if (mc!= null && mc.uploadDir!=null) {
+			uploadDir = mc.uploadDir;
+		} else {
+			uploadDir = new File("web/uploads");
+		}
+		fontsRoot = new File(uploadDir, "fonts");
+		if ( ! fontsRoot.exists()) {
 			boolean ok = fontsRoot.mkdirs();
 			if (!ok) throw new FailureException("Could not create directory " + fontsRoot);
-		}
+		}		
 	}
+	
 	
 	@Override
 	public void process(WebRequest state) throws IOException {

@@ -62,16 +62,18 @@ public class MediaUploadServlet implements IServlet {
 	// Limit number of threads available to servlet at any given time
 	static ExecutorService pool = Executors.newFixedThreadPool(10);
 	
-	File webRoot = new File("web"); // = Dep.get(ISiteConfig.class).getWebRootDir();
-	
-	public void setWebRoot(File webRoot) {
-		this.webRoot = webRoot;
-	}
 	
 	private final MediaConfig conf;
+	private File webRoot;
 	
 	public MediaUploadServlet() {
 		conf = Dep.get(MediaConfig.class);
+		webRoot = new File("web");
+		if (conf.uploadDir!=null) {
+			uploadsDir = conf.uploadDir;
+		} else {
+			uploadsDir = new File(webRoot, "uploads");
+		}
 	}
 	
 	String server = "/";
@@ -257,7 +259,7 @@ public class MediaUploadServlet implements IServlet {
 		}
 	}
 	
-	File uploadsDir = new File("web/uploads");
+	File uploadsDir;
 	
 	public MediaUploadServlet setUploadDir(File uploadDir) {
 		this.uploadsDir = uploadDir;
@@ -301,10 +303,8 @@ public class MediaUploadServlet implements IServlet {
 	
 	@Override
 	public void process(WebRequest state) throws Exception {		
-		// ...upload size
+		// ...upload size 	huh??
 		if (conf.uploadDir != null) {
-			this.setUploadDir(conf.uploadDir);
-			this.setWebRoot(new File("web"));
 			KServerType serverType = AppUtils.getServerType(state);
 			Log.d(AppUtils.getServerUrl(serverType, "media.good-loop.com").toString());
 			this.setServer(AppUtils.getServerUrl(serverType, "media.good-loop.com").toString());
