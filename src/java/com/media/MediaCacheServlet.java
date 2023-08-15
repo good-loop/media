@@ -17,6 +17,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.winterwell.utils.Dep;
 import com.winterwell.utils.FailureException;
 import com.winterwell.utils.Proc;
 import com.winterwell.utils.Utils;
@@ -67,15 +68,24 @@ public class MediaCacheServlet implements IServlet {
 
 	// Don't cache more than 10mb? TODO Think about this for video purposes...
 	private long maxSize = 10000000L;
+
+	File webRoot = new File("web");
 	
-	private File webRoot = new File("web/");
-	
-	private File cacheRoot = new File(webRoot, "uploads/mediacache/");
-	{
-		if (!cacheRoot.exists()) {
+	private File cacheRoot;
+
+	public MediaCacheServlet() {
+		File uploadDir;
+		MediaConfig mc = Dep.getWithDefault(MediaConfig.class, null);
+		if (mc!= null && mc.uploadDir!=null) {
+			uploadDir = mc.uploadDir;
+		} else {
+			uploadDir = new File("web/uploads");
+		}
+		cacheRoot = new File(uploadDir, "mediacache");
+		if ( ! cacheRoot.exists()) {
 			boolean ok = cacheRoot.mkdirs();
 			if (!ok) throw new FailureException("Could not create directory " + cacheRoot);
-		}
+		}		
 	}
 	
 	private Base64.Decoder decoder = Base64.getUrlDecoder();
