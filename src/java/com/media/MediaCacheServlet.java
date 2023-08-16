@@ -74,10 +74,9 @@ public class MediaCacheServlet implements IServlet {
 	
 	private File cacheRoot;
 	
-	private File uploadDir;
+	File uploadDir;
 
 	public MediaCacheServlet() {
-		File uploadDir;
 		MediaConfig mc = Dep.getWithDefault(MediaConfig.class, null);
 		if (mc!= null && mc.uploadDir!=null) {
 			uploadDir = mc.uploadDir;
