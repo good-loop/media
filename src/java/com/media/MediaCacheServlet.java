@@ -2,6 +2,7 @@ package com.media;
 
 import java.io.EOFException;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -144,14 +145,23 @@ public class MediaCacheServlet implements IServlet {
 					toServe = FileUtils.getNewFile(new File(cacheRoot.getAbsolutePath(), filename));
 					
 					URL srcUrlObj = new URL(srcUrl);
-					if (srcUrlObj.getHost().equals(reqUrl.getHost()) && srcUrlObj.getPath().startsWith("/uploads")) {
-						// If the file is on this uploads server, create a symlink to it in the requested location.
-						symlink(toServe, new File(webRoot, srcUrlObj.getPath()));
+					if (srcUrlObj.getHost().equals(reqUrl.getHost()) 
+							&& srcUrlObj.getPath().startsWith("/uploads")) 
+					{
+						File existingFileInDifferentPlace = new File(webRoot, srcUrlObj.getPath());
+						try {
+							// If the file is on this uploads server, create a symlink to it in the requested location.
+							// So that next time nginx can handle this
+							symlink(toServe, existingFileInDifferentPlace);
+						} catch (Throwable ex) {
+							Log.e(LOGTAG, "swallow symlink "+ex+" for "+state);
+							toServe = existingFileInDifferentPlace; // oh well -- serve from where it is
+						}
 					} else {
 						// If it's on another host, fetch and save it.
 						fetch(srcUrlObj, toServe);
 					}
-				}
+				} // ./!toServe.exists
 				// Does the path contain an implicit resize request?
 				toServe = maybeResize(path, toServe);
 			} catch (IllegalArgumentException e) {
@@ -247,14 +257,19 @@ public class MediaCacheServlet implements IServlet {
 	/**
 	 * Create a relative symlink - eg so "uploads/mediacache/xxxxx.png" can point to "../standard/xxxxx.png"
 	 * @param linkLocation The filename where the link should be created
-	 * @param targetFile The file the link should point to
+	 * @param sourceFile The file the link should point to
 	 * @throws IOException
 	 */
-	private void symlink(File linkLocation, File targetFile) throws IOException {
+	private void symlink(File linkLocation, File sourceFile) throws IOException {
 		 // Already done - eg propagated across GlusterFS by MediaCacheServlet on another server? Silently continue.
-		if (linkLocation.exists()) return;
+		if (linkLocation.exists()) {
+			return;
+		}
+		if ( ! sourceFile.exists()) {
+			throw new FileNotFoundException(sourceFile.toString());
+		}
 		Path link = linkLocation.getAbsoluteFile().toPath(); // abs location to create symlink at
-		Path tgt = targetFile.getCanonicalFile().toPath(); // abs location of link target
+		Path tgt = sourceFile.getCanonicalFile().toPath(); // abs location of link target
 		Path relTgt = link.getParent().relativize(tgt);
 		Files.createSymbolicLink(link, relTgt);
 	}
