@@ -120,6 +120,15 @@ public class MediaCacheServlet implements IServlet {
 			String srcUrlEncoded = filename.replaceAll("\\..*$", "");
 			srcUrl = new String(decoder.decode(srcUrlEncoded));
 		}
+		
+		// security check (see Aug 2023 bug)
+		if (filename.contains("..")) {
+			throw new WebEx.E403("Bad filename: "+srcUrl);
+		}
+		if (srcUrl.contains("..")) {
+			throw new WebEx.E403("Bad src path: "+srcUrl);
+		}
+		
 
 		// Once we have the file, we'll hand off to FileServlet - so keep tabs on its location outside the fetch/wait block
 		File toServe = new File(cacheRoot.getAbsolutePath(), filename);
