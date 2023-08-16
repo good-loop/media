@@ -103,12 +103,6 @@ public class MediaCacheServlet implements IServlet {
 			throw new WebEx.E403("We don't cache this file type: " + extension);
 		}
 		
-		// ...some safety checks on the path against hackers (should we whitelist allowed characters with a regex instead??)
-		String path = state.getRequestPath();
-		if (!FileUtils.isSafe(path)) {
-			throw new WebEx.E403(reqUrl.toString(), "Blocked unsafe characters (path: "+path+")");
-		}
-		
 		// The request may come with a param "&src=https://www.domain.com/filename.png"
 		// If so: fetch that URL & store it at the requested filename.
 		// Per our convention the filename should be a digest of the source URL.
@@ -120,16 +114,20 @@ public class MediaCacheServlet implements IServlet {
 			String srcUrlEncoded = filename.replaceAll("\\..*$", "");
 			srcUrl = new String(decoder.decode(srcUrlEncoded));
 		}
-		
-		// security check (see Aug 2023 bug)
-		if (filename.contains("..")) {
+
+		// ...security: some safety checks on the path against hackers (should we whitelist allowed characters with a regex instead??)
+		String path = state.getRequestPath();
+		if (!FileUtils.isSafe(path)) {
+			throw new WebEx.E403(reqUrl.toString(), "Blocked unsafe characters (path: "+path+")");
+		}		
+		// ...extra security check (see Aug 2023 bug)
+		if (!FileUtils.isSafe(filename)) { // ??paranoia given the path check
 			throw new WebEx.E403("Bad filename: "+srcUrl);
 		}
-		if (srcUrl.contains("..")) {
+		if (!FileUtils.isSafe(srcUrl)) {
 			throw new WebEx.E403("Bad src path: "+srcUrl);
 		}
 		
-
 		// Once we have the file, we'll hand off to FileServlet - so keep tabs on its location outside the fetch/wait block
 		File toServe = new File(cacheRoot.getAbsolutePath(), filename);
 		
