@@ -73,9 +73,10 @@ public class MediaCacheServlet implements IServlet {
 	File webRoot = new File("web");
 	
 	private File cacheRoot;
+	
+	File uploadDir;
 
 	public MediaCacheServlet() {
-		File uploadDir;
 		MediaConfig mc = Dep.getWithDefault(MediaConfig.class, null);
 		if (mc!= null && mc.uploadDir!=null) {
 			uploadDir = mc.uploadDir;
@@ -148,7 +149,7 @@ public class MediaCacheServlet implements IServlet {
 					if (srcUrlObj.getHost().equals(reqUrl.getHost()) 
 							&& srcUrlObj.getPath().startsWith("/uploads")) 
 					{
-						File existingFileInDifferentPlace = new File(webRoot, srcUrlObj.getPath());
+						File existingFileInDifferentPlace = new File(uploadDir, srcUrlObj.getPath().replaceFirst("/uploads", ""));
 						try {
 							// If the file is on this uploads server, create a symlink to it in the requested location.
 							// So that next time nginx can handle this
