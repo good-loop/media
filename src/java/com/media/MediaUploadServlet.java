@@ -58,6 +58,7 @@ public class MediaUploadServlet implements IServlet {
 	public static final FileUploadField STANDARD_UPLOAD = new FileUploadField("standard_upload");
 	public static final FileUploadField MOBILE_UPLOAD = new FileUploadField("mobile_upload");
 	public static final FileUploadField RAW_UPLOAD = new FileUploadField("raw_upload");
+	private static final String LOGTAG = "MediaUploadServlet";
 	
 	// Limit number of threads available to servlet at any given time
 	static ExecutorService pool = Executors.newFixedThreadPool(10);
@@ -92,7 +93,7 @@ public class MediaUploadServlet implements IServlet {
 		state.processMultipartIncoming(new ArrayMap<String, AField>());
 		// name from original filename - accessed via the pseudo field made by FileUploadField
 		String name = state.get(new Key<String>(UPLOAD.getFilenameField()), "");
-
+		Log.d(LOGTAG, "doUpload name:"+name);
 		// Get the file
 		// Random string appended to upload file name??
 		// Means that the same uploaded asset will be saved to a different file each time
@@ -218,7 +219,7 @@ public class MediaUploadServlet implements IServlet {
 			// Move to final resting place
 			FileUtils.move(tempFile, rawDest);
 			// Map of absolute paths
-			Map<String, MediaObject> _assetArr = new ArrayMap();
+			Map<String, MediaObject> _assetArr;
 
 			if (FileUtils.isImage(tempFile)) {
 				FileProcessor imageProcessor = FileProcessor.imageProcessor(rawDest, standardDest, mobileDest);
@@ -239,6 +240,8 @@ public class MediaUploadServlet implements IServlet {
 				_assetArr = fontProcessor.run(pool);
 			} else if (FileUtils.isDocument(tempFile)) {
 				// Documents are currently not processed in any way.
+				_assetArr = Map.of("raw", new MediaObject(rawDest));
+			} else {
 				_assetArr = Map.of("raw", new MediaObject(rawDest));
 			}
 			// done

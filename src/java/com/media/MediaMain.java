@@ -8,6 +8,13 @@ import com.winterwell.web.app.HttpServletWrapper;
 import com.winterwell.web.app.JettyLauncher;
 import com.winterwell.youagain.client.YouAgainClient;
 
+/**
+ * 
+ * Handles uploads.good-loop.com
+ * 
+ * @author Roscoe
+ *
+ */
 public class MediaMain extends AMain<MediaConfig> {
 	
 	public static void main(String[] args) {
