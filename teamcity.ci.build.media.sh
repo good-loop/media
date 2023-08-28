@@ -4,6 +4,7 @@ ssh winterwell@baker.good-loop.com bash <<EOF
 BUILD_TYPE="CI" \
 PROJECT_NAME="media" \
 BRANCH_NAME="master" \
+BOB_BUILD_PROJECT_NAME="BuildMedia" \
 NAME_OF_SERVICE="mediaserver" \
 GIT_REPO_URL="github.com:good-loop/media" \
 PROJECT_ROOT_ON_SERVER="/home/winterwell/media" \
