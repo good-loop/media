@@ -19,8 +19,11 @@ import com.winterwell.utils.log.Log;
  * See {@link MediaCacheServlet} for info on the directory structure this uses
  * and the non-Java dependencies e.g. imagemagick.
  * 
- * Font processing requires Python fontTools and FontForge
- * (sudo pip3 install fonttools, sudo apt install fontforge)
+ * Depends on apt packages:
+ * - fontforge: conversion of fonts
+ * - fonttools: subsetting of fonts with "pyftsubset"
+ * - brotli: enable fontforge to use proper WOFF2 compression
+ * (sudo apt install fontforge fonttools brotli)
  * 
  * TODO @Roscoe - Could you add a unit test for this? Thanks.
  * 
