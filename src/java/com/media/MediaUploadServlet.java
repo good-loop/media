@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.io.FilenameUtils;
 
 import com.media.data.MediaObject;
 import com.winterwell.utils.Dep;
@@ -32,8 +33,10 @@ import com.winterwell.web.app.IServlet;
 import com.winterwell.web.app.KServerType;
 import com.winterwell.web.app.WebRequest;
 import com.winterwell.web.fields.AField;
+import com.winterwell.web.fields.BoolField;
 import com.winterwell.web.fields.FileUploadField;
 import com.winterwell.web.fields.MissingFieldException;
+import com.winterwell.web.fields.SField;
 import com.winterwell.youagain.client.AuthToken;
 import com.winterwell.youagain.client.NoAuthException;
 import com.winterwell.youagain.client.YouAgainClient;
@@ -58,6 +61,8 @@ public class MediaUploadServlet implements IServlet {
 	public static final FileUploadField STANDARD_UPLOAD = new FileUploadField("standard_upload");
 	public static final FileUploadField MOBILE_UPLOAD = new FileUploadField("mobile_upload");
 	public static final FileUploadField RAW_UPLOAD = new FileUploadField("raw_upload");
+	public static final SField MAIN_FILE = new SField("main_file");
+	public static final SField UPDATE_REFS = new SField("update_refs");
 	private static final String LOGTAG = "MediaUploadServlet";
 	
 	// Limit number of threads available to servlet at any given time
@@ -102,36 +107,47 @@ public class MediaUploadServlet implements IServlet {
 		// Do the storage!
 		Map<String, MediaObject> _assetArr = doUpload2(tempFile, name, state.getParameterMap());
 		
+		ReferenceUpdater refs = new ReferenceUpdater();
+		
 		Dt rawDuration = null;
-		MediaObject rawFile = _assetArr.get("raw");		
+		MediaObject rawFile = _assetArr.get("raw");
 		if (rawFile != null) {
 			// Will just be null if the file is not a video
 			rawDuration = rawFile.calculateDuration();
 			rawFile.duration = rawDuration;
-			addUploadedAssetToCargoAndState(rawFile, "raw", RAW_UPLOAD, cargo, state);
+			addUploadedAssetToCargoAndState(rawFile, "raw", RAW_UPLOAD, cargo, state, refs);
 		}
 		
 		// Font uploads produce many more files than img/video uploads
-		if (FileUtils.isFont(tempFile)) {
+		if (FileUtils.isFont(tempFile) || FileUtils.isArchive(tempFile)) {
 			for (Map.Entry<String, MediaObject> entry : _assetArr.entrySet()) {
 				String field = entry.getKey();
 				MediaObject mo = entry.getValue();
 				if (mo == null) continue;
-				addUploadedAssetToCargoAndState(mo, field, new FileUploadField(field), cargo, state);
+				addUploadedAssetToCargoAndState(mo, field, new FileUploadField(field), cargo, state, refs);
 			}
 		} else {
 			MediaObject standardFile = _assetArr.get("standard");
 			if (standardFile != null) {
 				// Seems fair to assume that the duration will not have changed based on processing options
 				if (standardFile.duration == null ) standardFile.duration = rawDuration;
-				addUploadedAssetToCargoAndState(standardFile, "standard", STANDARD_UPLOAD, cargo, state);
+				addUploadedAssetToCargoAndState(standardFile, "standard", STANDARD_UPLOAD, cargo, state, refs);
 			}
 
 			MediaObject mobileFile = _assetArr.get("mobile");
 			if (mobileFile != null) {
 				// Seems fair to assume that the duration will not have changed based on processing options
 				if( mobileFile.duration == null ) mobileFile.duration = rawDuration;
-				addUploadedAssetToCargoAndState(mobileFile, "mobile", MOBILE_UPLOAD, cargo, state);
+				addUploadedAssetToCargoAndState(mobileFile, "mobile", MOBILE_UPLOAD, cargo, state, refs);
+			}
+		}
+		
+		if (state.getParameterMap().containsKey("update_refs")) {
+			Log.i("Replacing file references", Level.FINE);
+			Log.i(refs.toString(), Level.FINE);
+			for (Map.Entry<String, MediaObject> entry : _assetArr.entrySet()) {
+				Log.d("Searching " + entry.getValue().file.getName());
+				refs.replaceReferences(entry.getValue().file);
 			}
 		}
 
@@ -139,7 +155,7 @@ public class MediaUploadServlet implements IServlet {
 	}
 
 
-	protected Map addUploadedAssetToCargoAndState(MediaObject assetObject, String label, FileUploadField uploadField, Map cargo, WebRequest state) {
+	protected Map addUploadedAssetToCargoAndState(MediaObject assetObject, String label, FileUploadField uploadField, Map cargo, WebRequest state, ReferenceUpdater refs) {
 		File asset = assetObject.file;
 		Map<String, Object> params = new ArrayMap();
 
@@ -162,7 +178,11 @@ public class MediaUploadServlet implements IServlet {
 		String absPath = asset.getAbsolutePath();
 		assert(absPath.startsWith(uploadPath));					// I have trust issues ...
 		String assetPath = absPath.substring(uploadPath.length());
-		params.put("url", conf.uploadBaseUrl + (conf.uploadBaseUrl.endsWith("/")?"":"/") + assetPath);
+		String url = conf.uploadBaseUrl + (conf.uploadBaseUrl.endsWith("/")?"":"/") + assetPath;
+		params.put("url", url);
+		
+		String preferVersion = state.get(UPDATE_REFS);
+		refs.addReferenceUpdate(asset, url, label, preferVersion);
 		
 		cargo.put(label, params);
 		state.put(uploadField, asset);
@@ -208,49 +228,19 @@ public class MediaUploadServlet implements IServlet {
 		try {
 			// Do the upload
 			Log.i("Accepting upload of "+tempFile.length()+" bytes, temp location "+tempFile.getAbsolutePath(), Level.FINE);
-			rawDest = getDestFile("raw", tempFile);
-			// Moderately compressed version. Generated by either doProcessImage or doProcessVideo
-			standardDest = getDestFile("standard", tempFile);
-			// Most compressed version. Generated by either doProcessImage or doProcessVideo
-			mobileDest = getDestFile("mobile", tempFile);
+			rawDest = FileProcessor.getDestFile(FileUtils.getDirectory(uploadsDir, "raw"), tempFile);
 			
 			assert tempFile.exists() : "Destination file doesn't exist: "+tempFile.getAbsolutePath();
 			Log.report(tempFile.length()+" bytes uploaded to "+tempFile.getAbsolutePath(), Level.FINE);
 			// Move to final resting place
 			FileUtils.move(tempFile, rawDest);
-			// Map of absolute paths
-			Map<String, MediaObject> _assetArr;
-
-			if (FileUtils.isImage(tempFile)) {
-				FileProcessor imageProcessor = FileProcessor.imageProcessor(rawDest, standardDest, mobileDest);
-				_assetArr = imageProcessor.run(pool);
-			} else if (FileUtils.isVideo(tempFile)) {
-				FileProcessor videoProcessor = FileProcessor.videoProcessor(rawDest, standardDest, mobileDest, params);
-				_assetArr = videoProcessor.run(pool);
-			} else if (FileUtils.isFont(tempFile)) {
-				// Fonts go in /uploads/fonts/FONT_NAME/
-				// Original renamed to "raw.ttf" (or "raw.otf" etc)
-				String fontDirName = "fonts/" + FileUtils.getBasename(tempFile);
-				String rawFontExtension = FileUtils.getType(tempFile);
-				File baseFontDest = new File(uploadsDir, fontDirName);
-				File rawFontDest = getDestFile(fontDirName, new File("raw." + rawFontExtension));
-				FileUtils.move(rawDest, rawFontDest);
-				// Subsetted versions in same dir named EN.woff, EN.woff2, DE.woff, DE.woff2 etc
-				FileProcessor fontProcessor = FileProcessor.fontProcessor(rawFontDest, baseFontDest);
-				_assetArr = fontProcessor.run(pool);
-			} else if (FileUtils.isDocument(tempFile)) {
-				// Documents are currently not processed in any way.
-				_assetArr = Map.of("raw", new MediaObject(rawDest));
-			} else {
-				_assetArr = Map.of("raw", new MediaObject(rawDest));
-			}
-			// done
-			return _assetArr;
+			return FileProcessor.process(pool, uploadsDir, rawDest, null, null, params);
 		
 		// Error handling
 		} catch (Throwable e) {
 			// TODO For fonts, rm -rf the created directory
-			doUpload3_rollback(tempFile, standardDest, mobileDest);
+			// Rolback now handled internally in the FileProcessor try/catch
+			//doUpload3_rollback(tempFile, standardDest, mobileDest);
 			throw Utils.runtime(e);
 		}
 	}
@@ -267,24 +257,6 @@ public class MediaUploadServlet implements IServlet {
 	public MediaUploadServlet setUploadDir(File uploadDir) {
 		this.uploadsDir = uploadDir;
 		return this;
-	}
-	
-	/**
-	 * Does NOT move the tempFile
-	 * @param user
-	 * @param tempFile
-	 * @return suggested dest file
-	 */
-	public File getDestFile(String subDir, File tempFile) {
-		// Minor hack: Normalise M4V to MP4, to conform to the VAST spec for video formats
-		String destName = tempFile.getName().replaceAll("\\.m4v$", ".mp4");
-		File destDir = new File(uploadsDir, subDir);
-		if ( ! destDir.exists()) {
-			boolean ok = destDir.mkdirs();
-			if ( ! ok) throw new FailureException("Could not create directory "+destDir);
-		}
-		File dest = FileUtils.getNewFile(new File(destDir, destName));
-		return dest;
 	}
 	
 	/**
@@ -305,7 +277,7 @@ public class MediaUploadServlet implements IServlet {
 	}
 	
 	@Override
-	public void process(WebRequest state) throws Exception {		
+	public void process(WebRequest state) throws Exception {
 		// ...upload size 	huh??
 		if (conf.uploadDir != null) {
 			KServerType serverType = AppUtils.getServerType(state);
@@ -317,7 +289,7 @@ public class MediaUploadServlet implements IServlet {
 		// see: https://media.good-loop.com/uploads/captured/rendered.y3c1kLph.mp4 
 		// So handle a get here
 		if (state.isGET()) {
-			FileServlet fs = new FileServlet(webRoot);			
+			FileServlet fs = new FileServlet(webRoot);
 			fs.process(state);
 			return;
 		}
@@ -332,7 +304,7 @@ public class MediaUploadServlet implements IServlet {
 			Map cargo = new ArrayMap();			
 			Map<String, MediaObject> asset = doUpload(state, cargo);
 			
-			WebUtils2.CORS(state, true); // forceSet=true
+			//WebUtils2.CORS(state, true); // forceSet=true
 			
 			// redirect?
 			if (state.sendRedirect()) {
