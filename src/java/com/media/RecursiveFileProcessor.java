@@ -1,6 +1,7 @@
 package com.media;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -46,6 +47,8 @@ class RecursiveFileProcessor extends FileProcessor {
 	 */
 	public static Map<String, MediaObject> process(ExecutorService pool, File uploadsDir, File rawDest, File standardDir, File mobileDir, Map params) throws FileProcessException {
 		
+		// Always make this check first
+		if (Files.isSymbolicLink(rawDest.toPath())) throw new FileProcessException("No symbolic links allowed!");
 		if (rawDest.isDirectory()) {
 			// Directories cannot be uploaded - this is only called in recursive processes
 			File[] subFiles = rawDest.listFiles();

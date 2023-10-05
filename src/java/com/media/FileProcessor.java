@@ -1,6 +1,7 @@
 package com.media;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -89,6 +90,8 @@ public class FileProcessor {
 		Map<String, MediaObject> _assetArr;
 		
 		try {
+			// Always make this check first
+			if (Files.isSymbolicLink(rawDest.toPath())) throw new FileProcessException("No symbolic links allowed!");
 			if (rawDest.getName().equals("") || rawDest.getName() == null) {
 				Log.w("Empty filename??", rawDest);
 				return new ArrayMap<>(); // no-op
@@ -394,6 +397,9 @@ public class FileProcessor {
 class FileProcessException extends Exception {
 	public FileProcessException (String message, Throwable e) {
 		super(message, e);
+	}
+	public FileProcessException (String message) {
+		super(message);
 	}
 }
 
