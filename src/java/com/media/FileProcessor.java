@@ -71,27 +71,30 @@ public class FileProcessor {
 		
 		String command = "";
 		
-		// Only process JPG, JPEG, PNG - other types just copy into /standard and /mobile		
-		if(!PROCESSABLE_IMAGE_TYPES.contains(fileType) || rawDest.length() < MINIMUM_IMAGE_SIZE) {
-			Log.d("Image file is below 50kB. No processing will be done, but the raw image will be copied to the standard, mobile and raw directories");
-			// TODO Symlink instead of copying, like MediaCacheServlet
-			command = "cp " + inputImagePath + " " + standardImagePath
-					+ "; " + "cp " + inputImagePath + " " + lowResImagePath;
+		// Handle SVG files separately - we want to strip any script elements in these to prevent XSS attacks.
+		// Then just copy into /standard and /mobile
+		if ("svg".equalsIgnoreCase(fileType)) {
+			command = "svgo --config=/home/winterwell/media/config/svgo.js " + inputImagePath
+					+ "; cp " + inputImagePath + " " + standardImagePath
+					+ "; cp " + inputImagePath + " " + lowResImagePath;
 		} else {
-			if (JPEGOPTIM_SUPPORTED_TYPES.contains(fileType)) {
-				command = "/usr/bin/convert " + inputImagePath + " -quality " + STANDARD_RES_QUALITY + " " + standardImagePath
-						+ (JPEGOPTIM_SUPPORTED_TYPES.contains(fileType) ? "&& /usr/bin/jpegoptim " + standardImagePath : "")
-						+ "; " + "/usr/bin/convert " + inputImagePath + " -quality " + LOW_RES_QUALITY + " " + lowResImagePath
-						+ (JPEGOPTIM_SUPPORTED_TYPES.contains(fileType) ? "&& /usr/bin/jpegoptim " + lowResImagePath : "");
+			// Only process JPG, JPEG, PNG - other types just copy into /standard and /mobile		
+			if(!PROCESSABLE_IMAGE_TYPES.contains(fileType) || rawDest.length() < MINIMUM_IMAGE_SIZE) {
+				Log.d("Image file is below 50kB. No processing will be done, but the raw image will be copied to the standard, mobile and raw directories");
+				command = "cp " + inputImagePath + " " + standardImagePath
+						+ "; " + "cp " + inputImagePath + " " + lowResImagePath;
 			} else {
-				// optipng will iterate through different png compression methods and keep the result with smallest file size
-				command = "cp " + inputImagePath + " " + standardImagePath + "; "
-						// Change image mode to indexed (lossy but preserves alpha)
-						+ "/usr/local/bin/pngquant -s1 --strip --verbose --skip-if-larger --force --ext .png " + standardImagePath + "; "
-						// Optimise compression as much as possible
-						+ "/usr/bin/zopflipng -y -m" + standardImagePath + " " + standardImagePath + "; "
-						// Copy result to mobile directory
-						+ "cp " + standardImagePath + " " + lowResImagePath;
+				if (JPEGOPTIM_SUPPORTED_TYPES.contains(fileType)) {
+					command = "/usr/bin/convert " + inputImagePath + " -quality " + STANDARD_RES_QUALITY + " " + standardImagePath
+							+ (JPEGOPTIM_SUPPORTED_TYPES.contains(fileType) ? "&& /usr/bin/jpegoptim " + standardImagePath : "")
+							+ "; " + "/usr/bin/convert " + inputImagePath + " -quality " + LOW_RES_QUALITY + " " + lowResImagePath
+							+ (JPEGOPTIM_SUPPORTED_TYPES.contains(fileType) ? "&& /usr/bin/jpegoptim " + lowResImagePath : "");
+				} else {
+					command = "cp " + inputImagePath + " " + standardImagePath + "; "
+							+ "/usr/local/bin/pngquant -s1 --strip --verbose --skip-if-larger --force --ext .png " + standardImagePath + "; "
+							+ "/usr/bin/zopflipng -y -m" + standardImagePath + " " + standardImagePath + "; "
+							+ "cp " + standardImagePath + " " + lowResImagePath;
+				}
 			}
 		}
 		
