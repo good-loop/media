@@ -25,6 +25,10 @@ import com.winterwell.utils.log.Log;
  * - brotli: enable fontforge to use proper WOFF2 compression
  * (sudo apt install fontforge fonttools brotli)
  * 
+ * Depends on npm packages:
+ *  - svgo
+ *  (npm -g install svgo) 
+ * 
  * TODO @Roscoe - Could you add a unit test for this? Thanks.
  * 
  * @author Roscoe
