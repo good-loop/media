@@ -63,7 +63,7 @@ public class MediaCacheServlet implements IServlet {
 	static Map<String, Lock> inProgress = new HashMap<String, Lock>();
 	
 	/** Let's not cache EVERYTHING any rando throws at us. */
-	private static List<String> acceptExtensions = Arrays.asList(".png", ".jpg", ".jpeg", ".gif", ".svg", ".mp4", ".mpeg4", ".m4v", ".webm", ".webp");
+	private static List<String> acceptExtensions = Arrays.asList(".png", ".jpg", ".jpeg", ".gif", ".svg", ".mp4", ".mpeg4", ".m4v", ".webm", ".webp", ".ttf", ".otf", ".woff", ".woff2");
 
 	private static StringField SRC = new StringField("src");
 
@@ -146,9 +146,7 @@ public class MediaCacheServlet implements IServlet {
 					toServe = FileUtils.getNewFile(new File(cacheRoot.getAbsolutePath(), filename));
 					
 					URL srcUrlObj = new URL(srcUrl);
-					if (srcUrlObj.getHost().equals(reqUrl.getHost()) 
-							&& srcUrlObj.getPath().startsWith("/uploads")) 
-					{
+					if (srcUrlObj.getHost().equals(reqUrl.getHost()) && srcUrlObj.getPath().startsWith("/uploads")) {
 						File existingFileInDifferentPlace = new File(uploadDir, srcUrlObj.getPath().replaceFirst("/uploads", ""));
 						try {
 							// If the file is on this uploads server, create a symlink to it in the requested location.
@@ -330,30 +328,49 @@ public class MediaCacheServlet implements IServlet {
 
 			String inFormat = FileUtils.getType(original);
 			String outFormat = FileUtils.getType(outFile);
+			boolean toWebp = "webp".equals(outFormat);
 			boolean doConvert = !inFormat.equalsIgnoreCase(outFormat);
 
-			String resizeArg = "";
-			String convertArg = "";
+			String command = "convert "; // Default to ImageMagick
+			String args = "";
 
+			if (toWebp) {
+				// if ("webp".equals(outFormat)) args = " -quality 90 -define webp:use-sharp-yuv=1 webp:method=6";
+				// TODO Debian-based distros are stuck on ImageMagick 6 for the foreseeable,
+				// and IM6 has dire issues with .webp support - e.g. the quality setting is ignored.
+				// Until we get IM7 via apt (let's not get into building from source) we'll use cwebp instead.
+				command = "cwebp ";
+				// Params (copy-pasted from RecompressServlet.java)
+				// -metadata all: retain metadata, including colour profiles
+				// -af: auto-calibrate filtering params
+				// -q 95: quality factor 95% (similar to JPEG quality setting)
+				// -m 6: Slower encoding which explores more candidate options to find best compression
+				// -sharp_yuv: better, slower RGB->YUV conversion - massively improves artifacting on e.g. sharp red-green transitions
+				// (not currently used here) -psnr 55, -pass 10: aim for 55dB pSNR quality, try up to 10 iterations
+				args += " -metadata all -af -q 95 -m 6 -sharp_yuv";
+			}
 			if (doResize) {
-				// `convert -resize` accepts dimensions in forms "100x100" (WxH), "100x" (W only), "x100" (H only)
-				resizeArg = " -resize " + ("w".equals(scaleType) ? (targetSize + "x") : ("x" + targetSize));
+				args += " -resize ";
+				if (toWebp) {
+					// `cwebp -resize` format: "100 0" (set width, calculate height to retain aspect), "0 100" (set height, calculate width)
+					args += ("w".equals(scaleType) ? (targetSize + " 0") : ("0 " + targetSize));
+				} else {
+					// `convert -resize` format: "100x" (set width, calculate height to retain aspect), "x100" (set height, calculate width)
+					args += ("w".equals(scaleType) ? (targetSize + "x") : ("x" + targetSize));
+				}
 			}
-			if (doConvert) {
-				// default webp conversion can produce absolutely deep-fried images, but high-quality compression still beats jpg
-				// see ticket https://good-loop.monday.com/boards/2603585504/views/60487313/pulses/3943458907
-				if ("webp".equals(outFormat)) convertArg = " -quality 90";
-			}
+			// Add a trailing space, plus cwebp needs an explicit flag before the output filename
+			args += (toWebp ? " -o " : " ");
 
 			if (doResize || doConvert) {
-				Proc processImage = new Proc("convert " + original.getAbsolutePath() + resizeArg + convertArg + " " + outFile.getAbsolutePath());
+				Proc processImage = new Proc(command + original.getAbsolutePath() + args + outFile.getAbsolutePath());
 				processImage.start();
 				int ok = processImage.waitFor(5000); // 5 seconds... should never happen, but.
 				processImage.close();
 			} else {
 				// Result would be unchanged / scaled larger? Just symlink the original.
 				symlink(outFile, original);
-			} 
+			}
 			
 			// We'll be serving this newly-created file (or symlink), so return it.
 			return outFile;
@@ -364,5 +381,4 @@ public class MediaCacheServlet implements IServlet {
 			throw e;
 		}
 	}
-
 }
