@@ -51,6 +51,7 @@ public class MediaMain extends AMain<MediaConfig> {
 		jl.addServlet("/uploads/mediacache/*", new HttpServletWrapper(MediaCacheServlet::new));
 		jl.addServlet("/fonts/*", new HttpServletWrapper(FontServlet::new));
 		jl.addServlet("/*", new HttpServletWrapper(MediaUploadServlet::new));
+		jl.addServlet("/mediaIndex", new HttpServletWrapper(MediaIndexServlet::new));
 		super.addJettyServlets(jl);
 	}
 }
