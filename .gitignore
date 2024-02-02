@@ -9,3 +9,4 @@ config/version.properties
 dependencies
 bin
 build-lib
+/target/
